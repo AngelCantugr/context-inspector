@@ -42,6 +42,9 @@ When an agent degrades mid-run, we currently *guess* why. Context inspector turn
 
 ## Log
 
+*Note: `reports/` artifacts referenced below are local analysis outputs
+(contain local file paths) — they are gitignored and not shipped in the repo.*
+
 | Date | What happened |
 |---|---|
 | 2026-09-13 | Brief written; PoC scaffolded (estimator, analyzer, CLI, sample transcript) |
@@ -51,3 +54,4 @@ When an agent degrades mid-run, we currently *guess* why. Context inspector turn
 | 2026-09-21 | v0.3.0 — improvements driven by the verification findings: (1) v2 heuristic estimator (long code/JSON words ≈ len/4 tokens; validated ±15% vs tiktoken, v1 was ~2× under) + optional `--tokenizer tiktoken` (lazy import, stdlib-only default preserved); (2) Claude Code adapter now reads `prompt_snapshot` attachments → system prompt visible in ~26% of logs; (3) Codex adapter surfaces `<environment_context>`/`<user_action>` as a `harness context` category; (4) sweep skips subagent stub files (2,608 zero-token files gone: 3,715 → 1,122 sessions) and prints per-source caveats; (5) "wasted tokens" reworded to "tokens in repeated content". v2 sweep: ~80M tokens total, report at `reports/2026-09-21-full-sweep-v2.md`. |
 | 2026-09-21 | Per-tool attribution added (v0.3.1): analyzer maps tool_call ids → tool names and ranks tools by result tokens with per-call averages; new bloat signal when one tool produces >50% of tool-result tokens; sweep aggregates the ranking corpus-wide (overall + per-harness top 3). Validated against the ad-hoc analysis: exec 12.5M / Bash 8.0M / js_repl 4.7M tokens — shell output ≈ 66% of all tool-result tokens. v2 report regenerated with the tool section. |
 | 2026-09-21 | Published as a standalone public repo: github.com/AngelCantugr/context-inspector (MIT, v0.3.1). |
+| 2026-09-21 | v0.3.2 — fixes from a 3-agent review (code quality / accuracy / repo readiness): crashes on list-shaped content, non-dict JSONL lines, and source misdetection (now content-sniffed with path fallback + plain-JSON fallback); prompt_snapshot eras deduped (was 2–6× overstated); tool-call args no longer double-encoded; Codex list-shaped tool outputs flattened; `sweep --save` creates parent dirs; sweep median excludes zero-token stubs (count shown separately); Kimi sweep restricted to `agents/main`; README install leads with clone (PyPI not yet published) and the estimator claim is qualified; `sweep_runner.py` documented. |

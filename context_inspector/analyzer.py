@@ -41,6 +41,23 @@ def load_transcript(path: str | Path) -> list[dict]:
     return data
 
 
+def _coerce_text(content) -> str:
+    """Flatten OpenAI/Anthropic-style content (str | list of parts | other) to text."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for b in content:
+            if isinstance(b, str):
+                parts.append(b)
+            elif isinstance(b, dict):
+                parts.append(str(b.get("text") or b.get("thinking") or ""))
+        return "\n".join(p for p in parts if p)
+    return str(content)
+
+
 def _message_text(msg: dict, tokenizer) -> tuple[str, int]:
     """Return (category, tokens) for one message.
 
@@ -48,14 +65,15 @@ def _message_text(msg: dict, tokenizer) -> tuple[str, int]:
     get their own category — that's where bloat usually lives.
     """
     role = msg.get("role", "unknown")
-    content = msg.get("content") or ""
-    tokens = tokenizer(content)
+    tokens = tokenizer(_coerce_text(msg.get("content")))
 
     if role == "assistant":
-        args_tokens = sum(
-            tokenizer(json.dumps(tc.get("function", {}).get("arguments", "")))
-            for tc in (msg.get("tool_calls") or [])
-        )
+        args_tokens = 0
+        for tc in msg.get("tool_calls") or []:
+            args = tc.get("function", {}).get("arguments", "")
+            if not isinstance(args, str):
+                args = json.dumps(args, ensure_ascii=False)
+            args_tokens += tokenizer(args)
         return "assistant", tokens + args_tokens
 
     if role == "tool":
@@ -74,6 +92,8 @@ def analyze(messages: list[dict], tokenizer=None) -> Report:
     tool_counts: dict[str, int] = {}
 
     for i, msg in enumerate(messages):
+        if not isinstance(msg, dict):
+            continue  # tolerate bare strings / malformed entries in transcripts
         for tc in msg.get("tool_calls") or []:
             cid = tc.get("id") or ""
             if cid:
@@ -135,6 +155,8 @@ def _find_duplicates(messages: list[dict]) -> list[int]:
     seen: dict[str, int] = {}
     dupes: list[int] = []
     for i, msg in enumerate(messages):
+        if not isinstance(msg, dict):
+            continue
         content = msg.get("content")
         if (not content or content == "null") and not msg.get("tool_calls"):
             continue  # empty padding messages aren't duplicates, just noise

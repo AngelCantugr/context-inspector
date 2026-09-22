@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "context-inspector"
-version = "0.3.1"
+version = "0.3.2"
 description = "See what is actually eating your AI agent's context window — per-message, per-category, per-tool token analysis for Claude Code, Codex CLI, and Kimi Code session logs."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
 ]
+
+[project.urls]
+Repository = "https://github.com/AngelCantugr/context-inspector"
 
 [project.optional-dependencies]
 tiktoken = ["tiktoken>=0.5"]

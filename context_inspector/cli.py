@@ -75,7 +75,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.save:
             from pathlib import Path
 
-            Path(args.save).write_text(report_md, encoding="utf-8")
+            save_path = Path(args.save)
+            if save_path.parent != Path("."):
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+            save_path.write_text(report_md, encoding="utf-8")
             print(f"\nreport saved: {args.save}")
         return 0
 
@@ -87,7 +90,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: could not load transcript: {exc}", file=sys.stderr)
         return 1
 
-    report = analyze(messages, tokenizer=tokenizer)
+    try:
+        report = analyze(messages, tokenizer=tokenizer)
+    except (AttributeError, TypeError, ValueError) as exc:
+        print(f"error: could not analyze transcript: {exc}", file=sys.stderr)
+        return 1
 
     if args.json:
         print(json.dumps(to_dict(report), indent=2))

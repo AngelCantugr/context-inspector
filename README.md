@@ -15,8 +15,10 @@ for the actionable rules distilled from analyzing 1,100+ real sessions).
 Zero required dependencies (Python ≥ 3.10, stdlib only):
 
 ```bash
-pip install context-inspector   # or: clone and pip install .
-# optional, for real token counts: pip install "context-inspector[tiktoken]"
+git clone https://github.com/AngelCantugr/context-inspector.git
+cd context-inspector
+pip install .            # or: pip install ".[tiktoken]" for real token counts
+# PyPI release coming soon
 ```
 
 ## Usage
@@ -46,6 +48,9 @@ python -m context_inspector sweep --save reports/sweep.md
 # real token counts (requires: pip install tiktoken)
 python -m context_inspector analyze <log> --tokenizer tiktoken
 python -m context_inspector sweep --tokenizer tiktoken --save reports/sweep-tiktoken.md
+
+# dev utility for resumable batch sweeps (run from a clone; not installed by pip)
+python sweep_runner.py
 ```
 
 Supported session logs: **Claude Code** (`~/.claude/projects/**`), **Codex CLI**
@@ -67,8 +72,10 @@ Claude Code subagent sidechains are skipped).
 
 - Token counts default to a **v2 heuristic** (CJK chars ~1 token each; words
   ~1 token, but long words ≥8 chars — JSON, code, URLs, minified blobs —
-  ~1 token per 4 chars). Validated within ±15% of tiktoken o200k_base on
-  real session logs; v1 undercounted code-heavy traffic ~2×. For real counts:
+  ~1 token per 4 chars). Validated within ±15% of tiktoken o200k_base for
+  whole sessions of typical English-heavy agent traffic (~7 in 10 logs);
+  per-message variance is wider, and CJK, base64, or dense-numeric content
+  can deviate 30–75% in either direction. For real counts:
   `--tokenizer tiktoken` (optional dependency — the tool itself stays
   stdlib-only).
 - Input is the raw message list, so it works on transcripts from any provider

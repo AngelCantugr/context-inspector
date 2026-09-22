@@ -40,8 +40,8 @@ def discover_sessions(include_subagents: bool = False) -> list[tuple[str, str]]:
         found.append(("claude-code", p))
     for p in glob.glob(os.path.expanduser("~/.codex/sessions/**/rollout-*.jsonl"), recursive=True):
         found.append(("codex", p))
-    for p in glob.glob(os.path.join(KIMI_HOME, "sessions", "*", "*", "agents", "*", "wire.jsonl")):
-        found.append(("kimi-code", p))
+    for p in glob.glob(os.path.join(KIMI_HOME, "sessions", "*", "*", "agents", "main", "wire.jsonl")):
+        found.append(("kimi-code", p))  # 'main' only — subagent contexts excluded, like Claude sidechains
     return found
 
 

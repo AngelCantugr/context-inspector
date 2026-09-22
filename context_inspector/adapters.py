@@ -38,9 +38,11 @@ def _read_jsonl(path: str | Path) -> list[dict]:
         if not line:
             continue
         try:
-            records.append(json.loads(line))
+            obj = json.loads(line)
         except json.JSONDecodeError:
             continue  # tolerate truncated last lines in live logs
+        if isinstance(obj, dict):
+            records.append(obj)
     return records
 
 
@@ -76,6 +78,7 @@ def _tool_call(name: str, arguments, call_id: str = "") -> dict:
 def from_claude_code(path: str | Path) -> list[dict]:
     """Convert a Claude Code session log (~/.claude/projects/**/<id>.jsonl)."""
     messages: list[dict] = []
+    last_snapshot = None  # identical snapshots repeat in logs — count each era once
     for rec in _read_jsonl(path):
         if rec.get("isSidechain"):
             continue  # subagent context, not the main window
@@ -86,7 +89,8 @@ def from_claude_code(path: str | Path) -> list[dict]:
         if attachment.get("type") == "prompt_snapshot":
             parts = attachment.get("systemPrompt") or []
             text = "\n".join(p for p in parts if isinstance(p, str) and p)
-            if text:
+            if text and text != last_snapshot:
+                last_snapshot = text
                 messages.append({"role": "system", "content": text})
 
         msg = rec.get("message")
@@ -187,10 +191,15 @@ def from_codex(path: str | Path) -> list[dict]:
             )
 
         elif ptype in ("function_call_output", "custom_tool_call_output"):
+            output = payload.get("output", "")
+            if isinstance(output, list):  # newer rollouts: list of text parts
+                output = _text_of(output)
+            elif not isinstance(output, str):
+                output = json.dumps(output, ensure_ascii=False)
             messages.append(
                 {
                     "role": "tool",
-                    "content": str(payload.get("output", "")),
+                    "content": output,
                     "tool_call_id": payload.get("call_id", ""),
                     "name": "tool",
                 }
@@ -263,16 +272,56 @@ _ADAPTERS = {
 }
 
 
-def detect_source(path: str | Path) -> str | None:
-    """Guess the harness from the path; None means 'plain OpenAI JSON'."""
+def _sniff_source(path: str | Path) -> str | None:
+    """Identify the harness from the first parseable line's shape.
+
+    Returns a source name, or None for plain OpenAI JSON (or anything
+    unrecognizable — path heuristics in detect_source handle the rest).
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    return None  # e.g. pretty-printed OpenAI JSON array file
+                if not isinstance(obj, dict):
+                    return None
+                t = obj.get("type")
+                if t == "session_meta" or (t == "response_item" and "payload" in obj):
+                    return "codex"
+                if t in ("context.append_message", "context.append_loop_event"):
+                    return "kimi-code"
+                if t in ("user", "assistant", "system", "attachment") or (
+                    "message" in obj and ("parentUuid" in obj or "uuid" in obj)
+                ):
+                    return "claude-code"
+                if "role" in obj or "messages" in obj:
+                    return None  # plain OpenAI messages (JSONL or array file)
+                return None
+    except OSError:
+        pass
+    return None
+
+
+def _detect_by_path(path: str | Path) -> str | None:
+    """Fallback when content sniffing is inconclusive (empty/unreadable file)."""
     p = str(path)
     if ".claude" in p and p.endswith(".jsonl"):
         return "claude-code"
     if ".codex" in p or "rollout-" in Path(p).name:
         return "codex"
-    if Path(p).name == "wire.jsonl" or "kimi-code" in p or "daimon" in p:
+    if Path(p).name == "wire.jsonl":
         return "kimi-code"
     return None
+
+
+def detect_source(path: str | Path) -> str | None:
+    """Best-effort harness detection; None means 'plain OpenAI JSON'."""
+    return _sniff_source(path) or _detect_by_path(path)
 
 
 def load_any(path: str | Path, source: str | None = None) -> tuple[list[dict], str | None]:
@@ -288,4 +337,10 @@ def load_any(path: str | Path, source: str | None = None) -> tuple[list[dict], s
         return load_transcript(path), None
     if source not in _ADAPTERS:
         raise ValueError(f"unknown source '{source}' (expected one of {SOURCES})")
-    return _ADAPTERS[source](path), source
+    try:
+        return _ADAPTERS[source](path), source
+    except Exception:
+        # misdetected? fall back to plain OpenAI parsing before giving up
+        from .analyzer import load_transcript
+
+        return load_transcript(path), None
