@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# local sweep artifacts (contain local file paths — not for publishing)
+sweep_results.jsonl
+tool_attribution.jsonl
+reports/

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "context-inspector"
+version = "0.3.1"
+description = "See what is actually eating your AI agent's context window — per-message, per-category, per-tool token analysis for Claude Code, Codex CLI, and Kimi Code session logs."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Angel Cantu" }]
+keywords = ["llm", "agents", "context-engineering", "token-usage", "observability"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.optional-dependencies]
+tiktoken = ["tiktoken>=0.5"]
+
+[project.scripts]
+context-inspector = "context_inspector.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["context_inspector*"]
