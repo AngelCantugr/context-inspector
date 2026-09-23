@@ -56,6 +56,15 @@ class LoaderTest(unittest.TestCase):
         self.assertEqual(str(rows[0][0]), "2026-08-05")
 
 
+    def test_signal_labels_view(self):
+        (n,) = self.con.sql("select count(*) from signal_labels").fetchone()
+        self.assertEqual(n, 6)
+        (nulls,) = self.con.sql(
+            "select count(*) from signal_labels where label is null"
+        ).fetchone()
+        self.assertEqual(nulls, 0)
+
+
 class FriendlyErrorTest(unittest.TestCase):
     def test_loader_import_never_breaks_base_cli(self):
         # base CLI must import and run with no analytics deps touched
