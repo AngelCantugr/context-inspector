@@ -1,5 +1,5 @@
 """Loader tests (#1). Expected values are hand-computed from
-tests/fixtures/sweep_results.jsonl — see FIXTURE.md notes in test_queries."""
+tests/fixtures/sweep_results.jsonl — see the golden table in docs/plans/2026-09-22-l1-analytics-plan.md, Task 2."""
 
 from __future__ import annotations
 

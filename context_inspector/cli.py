@@ -1,4 +1,4 @@
-"""CLI entry point: python -m context_inspector {analyze,sweep} ..."""
+"""CLI entry point: python -m context_inspector {analyze,sweep,query} ..."""
 
 from __future__ import annotations
 
