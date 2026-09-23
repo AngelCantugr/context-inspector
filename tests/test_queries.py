@@ -61,6 +61,24 @@ class QueryTest(unittest.TestCase):
         self.assertEqual(grand[2], 4030)
         self.assertAlmostEqual(grand[3], 4030 / 9400, places=4)
 
+    def test_tool_ranking(self):
+        rows = {r[1]: r for r in self.query("tool_ranking") if r[0] == "all"}
+        self.assertEqual(rows["exec"][2:6], (1680, 1680 / 4030, 8, 210.0))
+        self.assertEqual(rows["Bash"][2:6], (1750, 1750 / 4030, 9, 1750 / 9))
+        self.assertEqual(rows["apply_patch"][2:6], (200, 200 / 4030, 2, 100.0))
+
+    def test_whale_table(self):
+        rows = self.query("whale_table")
+        self.assertEqual(len(rows), 8)  # error stub + zero-token excluded
+        self.assertEqual(rows[0][1:4],
+                         ("/fake/claude/projects/p1/s1.jsonl", "claude-code", 4000))
+
+    def test_duplicate_burden(self):
+        rows = {r[0]: r for r in self.query("duplicate_burden")}
+        self.assertEqual(rows["all"][1:4], (9, 3, 1500))
+        self.assertAlmostEqual(rows["all"][4], 1500 / 9400, places=4)
+        self.assertEqual(rows["kimi-code"][1:4], (2, 1, 450))
+
 
 if __name__ == "__main__":
     unittest.main()

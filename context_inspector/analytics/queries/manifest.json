@@ -20,6 +20,27 @@
       "description": "Token-weighted share per category per source, plus source='all' grand-total rows.",
       "columns": ["source", "category", "tokens", "share"],
       "params": []
+    },
+    {
+      "name": "tool_ranking",
+      "file": "tool_ranking.sql",
+      "description": "Per tool — total tokens, share of tool-result tokens, call count, tokens/call — overall (source='all') and per source.",
+      "columns": ["source", "tool", "tokens", "share", "calls", "tokens_per_call"],
+      "params": []
+    },
+    {
+      "name": "whale_table",
+      "file": "whale_table.sql",
+      "description": "Top-N sessions by total_tokens with source, dominant category, duplicate count, wasted tokens, signals fired.",
+      "columns": ["rank", "path", "source", "total_tokens", "top_category", "top_category_share", "n_duplicates", "wasted_tokens", "signals"],
+      "params": [{"name": "limit", "default": 10}]
+    },
+    {
+      "name": "duplicate_burden",
+      "file": "duplicate_burden.sql",
+      "description": "Sessions with duplicates and tokens in repeated content — count + share of all tokens, per source plus 'all'.",
+      "columns": ["source", "sessions", "sessions_with_duplicates", "wasted_tokens", "share_of_tokens"],
+      "params": []
     }
   ]
 }
