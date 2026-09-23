@@ -193,15 +193,15 @@ git commit -m "analytics: package skeleton + [analytics] extra (#1)"
 Exactly these 10 lines (one JSON object per line; absolute fake paths are fine — they never get opened, and keep Codex date segments parseable):
 
 ```jsonl
-{"source": "codex", "path": "/fake/codex/sessions/2026/08/05/rollout-a1.jsonl", "total_tokens": 1000, "category_tokens": {"tool result": 800, "user": 100, "assistant": 100}, "n_duplicates": 0, "wasted_tokens": 0, "signals": ["tool results are 80% of the window"], "tool_tokens": {"exec": 800}, "tool_counts": {"exec": 4}}
-{"source": "codex", "path": "/fake/codex/sessions/2026/08/20/rollout-a2.jsonl", "total_tokens": 500, "category_tokens": {"user": 200, "assistant": 300}, "n_duplicates": 2, "wasted_tokens": 150, "signals": ["exact duplicates present"], "tool_tokens": {}, "tool_counts": {}}
+{"source": "codex", "path": "/fake/codex/sessions/2026/08/05/rollout-a1.jsonl", "total_tokens": 1000, "category_tokens": {"tool result": 800, "user": 100, "assistant": 100}, "n_duplicates": 0, "wasted_tokens": 0, "signals": ["tool results are 80% of the window — the chat is NOT what's eating your context"], "tool_tokens": {"exec": 800}, "tool_counts": {"exec": 4}}
+{"source": "codex", "path": "/fake/codex/sessions/2026/08/20/rollout-a2.jsonl", "total_tokens": 500, "category_tokens": {"user": 200, "assistant": 300}, "n_duplicates": 2, "wasted_tokens": 150, "signals": ["2 exact duplicate message(s), ~150 tokens in repeated content"], "tool_tokens": {}, "tool_counts": {}}
 {"source": "codex", "path": "/fake/codex/sessions/2026/09/02/rollout-a3.jsonl", "total_tokens": 2000, "category_tokens": {"tool result": 600, "system": 400, "user": 400, "assistant": 600}, "n_duplicates": 0, "wasted_tokens": 0, "signals": [], "tool_tokens": {"exec": 400, "apply_patch": 200}, "tool_counts": {"exec": 2, "apply_patch": 2}}
-{"source": "claude-code", "path": "/fake/claude/projects/p1/s1.jsonl", "total_tokens": 4000, "category_tokens": {"tool result": 1600, "system": 800, "user": 800, "assistant": 800}, "n_duplicates": 3, "wasted_tokens": 900, "signals": ["tool results are 40% of the window", "exact duplicates present"], "tool_tokens": {"Bash": 1200, "Read": 400}, "tool_counts": {"Bash": 6, "Read": 2}}
+{"source": "claude-code", "path": "/fake/claude/projects/p1/s1.jsonl", "total_tokens": 4000, "category_tokens": {"tool result": 1700, "system": 800, "user": 800, "assistant": 700}, "n_duplicates": 3, "wasted_tokens": 900, "signals": ["tool results are 42% of the window — the chat is NOT what's eating your context", "3 exact duplicate message(s), ~900 tokens in repeated content"], "tool_tokens": {"Bash": 1300, "Read": 400}, "tool_counts": {"Bash": 6, "Read": 2}}
 {"source": "claude-code", "path": "/fake/claude/projects/p1/s2.jsonl", "total_tokens": 100, "category_tokens": {"user": 100}, "n_duplicates": 0, "wasted_tokens": 0, "signals": [], "tool_tokens": {}, "tool_counts": {}}
 {"source": "claude-code", "path": "/fake/claude/projects/p2/s3.jsonl", "total_tokens": 0, "category_tokens": {}, "n_duplicates": 0, "wasted_tokens": 0, "signals": [], "tool_tokens": {}, "tool_counts": {}}
-{"source": "kimi-code", "path": "/fake/kimi/sessions/ws1/conv1/agents/main/wire.jsonl", "total_tokens": 900, "category_tokens": {"tool result": 450, "user": 450}, "n_duplicates": 1, "wasted_tokens": 450, "signals": ["exact duplicates present"], "tool_tokens": {"Bash": 450}, "tool_counts": {"Bash": 3}}
+{"source": "kimi-code", "path": "/fake/kimi/sessions/ws1/conv1/agents/main/wire.jsonl", "total_tokens": 900, "category_tokens": {"tool result": 450, "user": 450}, "n_duplicates": 1, "wasted_tokens": 450, "signals": ["1 exact duplicate message(s), ~450 tokens in repeated content"], "tool_tokens": {"Bash": 450}, "tool_counts": {"Bash": 3}}
 {"source": "kimi-code", "path": "/fake/kimi/sessions/ws1/conv2/agents/main/wire.jsonl", "total_tokens": 300, "category_tokens": {"assistant": 300}, "n_duplicates": 0, "wasted_tokens": 0, "signals": []}
-{"source": "codex", "path": "/fake/codex/sessions/2026/09/15/rollout-a4.jsonl", "total_tokens": 600, "category_tokens": {"tool result": 480, "user": 120}, "n_duplicates": 0, "wasted_tokens": 0, "signals": ["tool results are 80% of the window"], "tool_tokens": {"exec": 480}, "tool_counts": {"exec": 2}}
+{"source": "codex", "path": "/fake/codex/sessions/2026/09/15/rollout-a4.jsonl", "total_tokens": 600, "category_tokens": {"tool result": 480, "user": 120}, "n_duplicates": 0, "wasted_tokens": 0, "signals": ["tool results are 80% of the window — the chat is NOT what's eating your context"], "tool_tokens": {"exec": 480}, "tool_counts": {"exec": 2}}
 {"source": "codex", "path": "/fake/codex/sessions/2026/09/15/rollout-err.jsonl", "error": "boom"}
 ```
 
@@ -215,15 +215,15 @@ Sessions (10 total, 9 valid after excluding the error stub; 8 non-empty after al
 |---|---|
 | loader | sessions=10, categories=19 rows, tools=7 rows, signal_labels=6 rows |
 | window_percentiles (total>0) | codex [500,600,1000,2000] p50=800; claude-code [100,4000] p50=2050; kimi-code [300,900] p50=600 |
-| category_shares | codex: tool result 1880/4100≈0.4585, assistant 1000, user 820, system 400; grand-total row source='all': tool result 3410/9400≈0.3628 |
-| tool_ranking (all) | exec 1680 tok / 8 calls / 210 per call; Bash 1650/9/183.3; Read 400/2/200; apply_patch 200/2/100; total tool tokens 3930; exec share 1680/3930≈0.4275 |
-| whale_table (limit 10) | top: s1 4000 (claude), a3 2000, a1 1000, conv1 900, a4 600 — 8 rows total |
+| category_shares | codex: tool result 1880/4100≈0.4585, assistant 1000, user 820, system 400; grand-total row source='all': tool result 4030/9400≈0.4287 |
+| tool_ranking (all) | exec 1680 tok / 8 calls / 210 per call; Bash 1750/9/194.4; Read 400/2/200; apply_patch 200/2/100; total tool tokens 4030; exec share 1680/4030≈0.4169 |
+| whale_table (limit 10) | top: s1 4000 (claude, top_category_share 0.425), a3 2000, a1 1000, conv1 900, a4 600 — 8 rows total |
 | duplicate_burden | 3 sessions with dupes (a2, s1, conv1); wasted 150+900+450=1500; share of all tokens 1500/9400≈0.1596; per source: codex 150/4100, claude-code 900/4100, kimi-code 450/1200 |
 | monthly_trend | 2026-08: 2 sessions, 1500 tokens, median 750; 2026-09: 2 sessions, 2600 tokens, median 1300 (error stub and undated paths excluded) |
 | tool_share_trend | 2026-08: exec 800 = 100%; 2026-09: exec 880/1080≈0.8148, apply_patch 200/1080≈0.1852 |
 | signal_frequency | codex (4 valid): "tool results >40% of window" 2/4=0.5, "exact duplicates present" 1/4=0.25; claude-code (3): 1/3, 1/3; kimi-code (2): 0, 1/2 |
 | category_outliers (threshold 60) | 4 rows: a1 tool result 80%, s2 user 100%, conv2 assistant 100%, a4 tool result 80% |
-| bloat_signals_by_tool | "tool results >40% of window": exec 1280, Bash 1200, Read 400; "exact duplicates present": Bash 1650, Read 400 |
+| bloat_signals_by_tool | "tool results >40% of window": exec 1280, Bash 1300, Read 400; "exact duplicates present": Bash 1750, Read 400 |
 
 **Step 3: Verify the fixture parses**
 
@@ -343,17 +343,22 @@ def load_results(path: str):
     )
     # Canonical labels mirror sweep.SIGNAL_KEYS substring rules, so query
     # results match the sweep report. DISTINCT mirrors its set semantics.
+    # Real sweeps also carry signal strings that match no key (e.g. the
+    # single-tool-dominance signal) — the WHERE drops those, like
+    # sweep._signal_hits ignoring unmatched strings.
     con.execute(
         """
         CREATE VIEW signal_labels AS
-        SELECT DISTINCT path, source,
-            CASE
-                WHEN contains(sig, 'tool results') THEN 'tool results >40% of window'
-                WHEN contains(sig, 'system prompt') THEN 'system prompt >25% of window'
-                WHEN contains(sig, 'duplicate')     THEN 'exact duplicates present'
-                WHEN contains(sig, 'alone is')      THEN 'single message >30% of window'
-            END AS label
-        FROM sessions, unnest(signals) AS u(sig)
+        SELECT DISTINCT path, source, label FROM (
+            SELECT path, source,
+                CASE
+                    WHEN contains(sig, 'tool results') THEN 'tool results >40% of window'
+                    WHEN contains(sig, 'system prompt') THEN 'system prompt >25% of window'
+                    WHEN contains(sig, 'duplicate')     THEN 'exact duplicates present'
+                    WHEN contains(sig, 'alone is')      THEN 'single message >30% of window'
+                END AS label
+            FROM sessions, unnest(signals) AS u(sig)
+        ) WHERE label IS NOT NULL
         """
     )
     return con
@@ -463,8 +468,8 @@ class QueryTest(unittest.TestCase):
         self.assertEqual(codex_tool[2], 1880)
         self.assertAlmostEqual(codex_tool[3], 1880 / 4100, places=4)
         grand = next(r for r in rows if r[0] == "all" and r[1] == "tool result")
-        self.assertEqual(grand[2], 3410)
-        self.assertAlmostEqual(grand[3], 3410 / 9400, places=4)
+        self.assertEqual(grand[2], 4030)
+        self.assertAlmostEqual(grand[3], 4030 / 9400, places=4)
 
 
 if __name__ == "__main__":
@@ -627,9 +632,9 @@ git commit -m "analytics: query manifest + monthly_trend, window_percentiles, ca
 ```python
     def test_tool_ranking(self):
         rows = {r[1]: r for r in self.query("tool_ranking") if r[0] == "all"}
-        self.assertEqual(rows["exec"][2:6], (1680, 1680 / 3930, 8, 210.0))
-        self.assertEqual(rows["Bash"][2:6], (1650, 1650 / 3930, 9, 1650 / 9))
-        self.assertEqual(rows["apply_patch"][2:6], (200, 200 / 3930, 2, 100.0))
+        self.assertEqual(rows["exec"][2:6], (1680, 1680 / 4030, 8, 210.0))
+        self.assertEqual(rows["Bash"][2:6], (1750, 1750 / 4030, 9, 1750 / 9))
+        self.assertEqual(rows["apply_patch"][2:6], (200, 200 / 4030, 2, 100.0))
 
     def test_whale_table(self):
         rows = self.query("whale_table")
@@ -839,8 +844,8 @@ columns: `["source", "label", "sessions", "share"]`.
         rows = self.query("bloat_signals_by_tool")
         got = {(r[0], r[1]): r[2] for r in rows}
         self.assertEqual(got[("tool results >40% of window", "exec")], 1280)
-        self.assertEqual(got[("tool results >40% of window", "Bash")], 1200)
-        self.assertEqual(got[("exact duplicates present", "Bash")], 1650)
+        self.assertEqual(got[("tool results >40% of window", "Bash")], 1300)
+        self.assertEqual(got[("exact duplicates present", "Bash")], 1750)
         self.assertEqual(got[("exact duplicates present", "Read")], 400)
 ```
 
