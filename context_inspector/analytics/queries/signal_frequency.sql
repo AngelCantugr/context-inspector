@@ -3,7 +3,9 @@
 --   Mirrors the sweep report's signal_frequency block.
 -- caveats: labels come from the signal_labels view (same substring rules as
 --   sweep.SIGNAL_KEYS). Denominator = valid sessions per source; signals on
---   error records are ignored (there are none by construction).
+--   error records are ignored (there are none by construction). Sources
+--   whose sessions are all error records are omitted entirely. The
+--   sessions join also guards against malformed error+signals stubs.
 WITH denom AS (
     SELECT source, count(*) AS n FROM sessions WHERE error IS NULL GROUP BY source
 )

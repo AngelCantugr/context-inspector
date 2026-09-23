@@ -10,14 +10,14 @@
     {
       "name": "window_percentiles",
       "file": "window_percentiles.sql",
-      "description": "p50/p90/p99 of total_tokens per source (non-empty sessions only).",
+      "description": "p50/p90/p99 of total_tokens per source.",
       "columns": ["source", "p50", "p90", "p99"],
       "params": []
     },
     {
       "name": "category_shares",
       "file": "category_shares.sql",
-      "description": "Token-weighted share per category per source, plus source='all' grand-total rows.",
+      "description": "Token-weighted share per category per source, plus a source='all' grand-total row set.",
       "columns": ["source", "category", "tokens", "share"],
       "params": []
     },
@@ -54,6 +54,20 @@
       "file": "signal_frequency.sql",
       "description": "Share of sessions firing each bloat signal, per source. Mirrors the sweep report's signal_frequency block.",
       "columns": ["source", "label", "sessions", "share"],
+      "params": []
+    },
+    {
+      "name": "category_outliers",
+      "file": "category_outliers.sql",
+      "description": "Sessions where a single category exceeds X% of the window.",
+      "columns": ["path", "source", "category", "category_tokens", "total_tokens", "share"],
+      "params": [{"name": "threshold", "default": 60}]
+    },
+    {
+      "name": "bloat_signals_by_tool",
+      "file": "bloat_signals_by_tool.sql",
+      "description": "Cross-tab — for sessions where a given signal fired, which tools dominate (tool-result tokens per label × tool).",
+      "columns": ["label", "tool", "tokens", "sessions"],
       "params": []
     }
   ]

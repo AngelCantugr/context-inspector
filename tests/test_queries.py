@@ -95,6 +95,29 @@ class QueryTest(unittest.TestCase):
         kimi = {r[1]: r for r in rows if r[0] == "kimi-code"}
         self.assertEqual(kimi["exact duplicates present"][2:], (2, 0.5))
 
+    def test_category_outliers_default_threshold(self):
+        rows = self.query("category_outliers")
+        got = {(r[0].rsplit("/", 1)[-1], r[2], round(r[5], 2)) for r in rows}
+        self.assertEqual(got, {
+            ("rollout-a1.jsonl", "tool result", 0.8),
+            ("s2.jsonl", "user", 1.0),
+            ("wire.jsonl", "assistant", 1.0),
+            ("rollout-a4.jsonl", "tool result", 0.8),
+        })
+
+    def test_bloat_signals_by_tool(self):
+        rows = self.query("bloat_signals_by_tool")
+        got = {(r[0], r[1]): r[2] for r in rows}
+        self.assertEqual(got[("tool results >40% of window", "exec")], 1280)
+        self.assertEqual(got[("tool results >40% of window", "Bash")], 1300)
+        self.assertEqual(got[("exact duplicates present", "Bash")], 1750)
+        self.assertEqual(got[("exact duplicates present", "Read")], 400)
+
+    def test_manifest_files_exist(self):
+        from context_inspector.analytics.runner import QUERIES_DIR
+        for entry in self.manifest.values():
+            self.assertTrue((QUERIES_DIR / entry.file).exists(), entry.file)
+
     def test_whale_table_limit_param(self):
         from context_inspector.analytics.runner import run_query
         entry = self.manifest["whale_table"]
