@@ -432,11 +432,11 @@ class QueryTest(unittest.TestCase):
 
         cls.con = load_results(str(FIXTURE))
         cls.manifest = {e.name: e for e in load_manifest()}
-        cls.run = staticmethod(run_query)
+        cls.run_query = staticmethod(run_query)  # not "run" — would shadow TestCase.run
 
     def query(self, name):
         entry = self.manifest[name]
-        columns, rows = self.run(self.con, entry)
+        columns, rows = self.run_query(self.con, entry)
         self.assertEqual(list(columns), entry.columns)
         return rows
 
@@ -662,10 +662,10 @@ git commit -m "analytics: query manifest + monthly_trend, window_percentiles, ca
 -- caveats: tokens/call is NULL when tool_counts was absent (older sweeps).
 --   Shares are of all tool-result tokens within the same source scope.
 WITH scoped AS (
-    SELECT source, tool, sum(tokens) AS tokens, sum(calls) AS calls
+    SELECT t.source, t.tool, sum(t.tokens) AS tokens, sum(t.calls) AS calls
     FROM tools t JOIN sessions s USING (path)
     WHERE s.error IS NULL
-    GROUP BY source, tool
+    GROUP BY t.source, t.tool
 ), combined AS (
     SELECT source, tool, tokens, calls FROM scoped
     UNION ALL
