@@ -18,5 +18,5 @@ WITH per_source AS (
            sum(wasted_tokens), sum(total_tokens) FROM per_source
 )
 SELECT source, sessions, sessions_with_duplicates, wasted_tokens,
-       wasted_tokens * 1.0 / total_tokens AS share_of_tokens
+       wasted_tokens * 1.0 / NULLIF(total_tokens, 0) AS share_of_tokens
 FROM combined ORDER BY source;

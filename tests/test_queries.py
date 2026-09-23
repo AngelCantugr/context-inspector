@@ -79,6 +79,37 @@ class QueryTest(unittest.TestCase):
         self.assertAlmostEqual(rows["all"][4], 1500 / 9400, places=4)
         self.assertEqual(rows["kimi-code"][1:4], (2, 1, 450))
 
+    def test_whale_table_limit_param(self):
+        from context_inspector.analytics.runner import run_query
+        entry = self.manifest["whale_table"]
+        columns, rows = run_query(self.con, entry, [2])
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0][3], 4000)
+
+    def test_division_edges_yield_null_not_nan_inf(self):
+        import json, tempfile
+        from context_inspector.analytics import load_results
+        from context_inspector.analytics.runner import run_query
+        recs = [
+            {"source": "zero-src", "path": "/fake/z/sessions/2026/01/01/z.jsonl",
+             "total_tokens": 0, "category_tokens": {}, "n_duplicates": 0,
+             "wasted_tokens": 0, "signals": [], "tool_tokens": {}, "tool_counts": {}},
+            {"source": "odd", "path": "/fake/o/sessions/2026/01/02/o.jsonl",
+             "total_tokens": 10, "category_tokens": {"tool result": 10},
+             "n_duplicates": 0, "wasted_tokens": 0, "signals": [],
+             "tool_tokens": {"exec": 10}, "tool_counts": {"exec": 0}},
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as f:
+            for r in recs:
+                f.write(json.dumps(r) + "\n")
+            tmp = f.name
+        con = load_results(tmp)
+        burden = {r[0]: r for r in run_query(con, self.manifest["duplicate_burden"])[1]}
+        self.assertIsNone(burden["zero-src"][4])
+        ranking = {r[1]: r for r in run_query(con, self.manifest["tool_ranking"])[1]
+                   if r[0] == "odd"}
+        self.assertIsNone(ranking["exec"][5])
+
 
 if __name__ == "__main__":
     unittest.main()
