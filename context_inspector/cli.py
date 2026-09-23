@@ -127,13 +127,21 @@ def main(argv: list[str] | None = None) -> int:
 
 def _run_query(args: argparse.Namespace) -> int:
     try:
+        import duckdb
+
         from .analytics import load_results
         from .analytics.runner import load_manifest, run_queries
-    except RuntimeError as exc:  # duckdb missing — friendly install hint
-        print(f"error: {exc}", file=sys.stderr)
+    except ImportError:  # duckdb missing — friendly install hint
+        print(
+            "error: duckdb is not installed. Install it with "
+            '`pip install "context-inspector[analytics]"` '
+            '(or `uv pip install -e ".[analytics]"` from a clone).',
+            file=sys.stderr,
+        )
         return 1
-    known = {e.name for e in load_manifest()}
-    names = args.queries or [e.name for e in load_manifest()]
+    entries = load_manifest()
+    known = {e.name for e in entries}
+    names = args.queries or [e.name for e in entries]
     unknown = [n for n in names if n not in known]
     if unknown:
         print(
@@ -143,10 +151,14 @@ def _run_query(args: argparse.Namespace) -> int:
         return 2
     try:
         con = load_results(args.sweep_results)
-    except (OSError, RuntimeError) as exc:
+    except (OSError, RuntimeError, duckdb.Error) as exc:
         print(f"error: could not load sweep results: {exc}", file=sys.stderr)
         return 1
-    summaries = run_queries(con, names, Path(args.out))
+    try:
+        summaries = run_queries(con, names, Path(args.out))
+    except (OSError, RuntimeError, duckdb.Error) as exc:
+        print(f"error: query failed: {exc}", file=sys.stderr)
+        return 1
     for line in summaries:
         print(line)
     if args.json:

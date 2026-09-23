@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from context_inspector.cli import main
@@ -38,6 +40,34 @@ class QueryCliTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             rc = main(["query", str(FIXTURE), "--query", "nope", "--out", tmp])
             self.assertEqual(rc, 2)
+
+    def test_corrupt_jsonl_fails_cleanly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "corrupt.jsonl"
+            bad.write_text('{"source": "claude", "path": "/x", "total',
+                           encoding="utf-8")
+            with redirect_stderr(io.StringIO()) as err:
+                rc = main(["query", str(bad), "--out", tmp])
+            self.assertEqual(rc, 1)
+            self.assertTrue(err.getvalue().startswith("error: "))
+
+    def test_missing_file_fails_cleanly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with redirect_stderr(io.StringIO()) as err:
+                rc = main(["query", str(Path(tmp) / "nope.jsonl"), "--out", tmp])
+            self.assertEqual(rc, 1)
+            self.assertTrue(err.getvalue().startswith("error: "))
+
+    def test_json_flag_prints_full_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with redirect_stdout(io.StringIO()) as out:
+                rc = main(["query", str(FIXTURE), "--query", "window_percentiles",
+                           "--json", "--out", tmp])
+            self.assertEqual(rc, 0)
+            payload = out.getvalue().partition("\n")[2]  # skip summary line
+            data = json.loads(payload)
+            self.assertTrue(data)
+            self.assertTrue(all("source" in row for row in data))
 
 
 if __name__ == "__main__":
