@@ -28,3 +28,6 @@ context-inspector = "context_inspector.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["context_inspector*"]
+
+[tool.setuptools.package-data]
+context_inspector = ["analytics/queries/*.sql", "analytics/queries/manifest.json"]

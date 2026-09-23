@@ -53,7 +53,7 @@
       "name": "signal_frequency",
       "file": "signal_frequency.sql",
       "description": "Share of sessions firing each bloat signal, per source. Mirrors the sweep report's signal_frequency block.",
-      "columns": ["source", "label", "sessions", "share"],
+      "columns": ["source", "label", "source_sessions", "share"],
       "params": []
     },
     {

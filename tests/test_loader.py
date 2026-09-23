@@ -55,6 +55,28 @@ class LoaderTest(unittest.TestCase):
         ).fetchall()
         self.assertEqual(str(rows[0][0]), "2026-08-05")
 
+    def test_duplicate_paths_rejected(self):
+        import json, tempfile
+        from context_inspector.analytics import load_results
+
+        recs = [
+            {"source": "codex", "path": "/fake/dup/sessions/2026/01/01/a.jsonl",
+             "total_tokens": 10, "category_tokens": {}, "tool_tokens": {},
+             "tool_counts": {}, "n_duplicates": 0, "wasted_tokens": 0,
+             "signals": []},
+            {"source": "codex", "path": "/fake/dup/sessions/2026/01/01/a.jsonl",
+             "total_tokens": 20, "category_tokens": {}, "tool_tokens": {},
+             "tool_counts": {}, "n_duplicates": 0, "wasted_tokens": 0,
+             "signals": []},
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as f:
+            for r in recs:
+                f.write(json.dumps(r) + "\n")
+            tmp = f.name
+        with self.assertRaises(RuntimeError) as cm:
+            load_results(tmp)
+        self.assertIn("/fake/dup/sessions/2026/01/01/a.jsonl", str(cm.exception))
+
 
     def test_signal_labels_view(self):
         (n,) = self.con.sql("select count(*) from signal_labels").fetchone()
@@ -95,6 +117,30 @@ class MissingDuckDBTest(unittest.TestCase):
             [sys.executable, "-c", code], capture_output=True, text=True
         )
         self.assertIn("[analytics]", out.stdout)
+
+    def test_base_cli_analyze_works_without_duckdb(self):
+        import subprocess, sys
+        transcript = (
+            Path(__file__).parent.parent / "examples" / "sample_transcript.json"
+        ).resolve()
+        code = (
+            "import sys\n"
+            "class Blocker:\n"
+            "    def find_spec(self, name, path=None, target=None):\n"
+            "        if name == 'duckdb':\n"
+            "            raise ImportError('blocked')\n"
+            "        return None\n"
+            "sys.meta_path.insert(0, Blocker())\n"
+            "sys.modules.pop('duckdb', None)\n"
+            "from context_inspector.cli import main\n"
+            f"rc = main(['analyze', {str(transcript)!r}])\n"
+            "assert rc == 0, rc\n"
+        )
+        out = subprocess.run(
+            [sys.executable, "-c", code], capture_output=True, text=True
+        )
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertTrue(out.stdout.strip())
 
 
 if __name__ == "__main__":

@@ -5,6 +5,10 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import duckdb
 
 QUERIES_DIR = Path(__file__).parent / "queries"
 
@@ -23,7 +27,9 @@ def load_manifest() -> list[QueryEntry]:
     return [QueryEntry(**entry) for entry in data["queries"]]
 
 
-def run_query(con, entry: QueryEntry, params: list | None = None):
+def run_query(
+    con: duckdb.DuckDBPyConnection, entry: QueryEntry, params: list | None = None
+) -> tuple[list[str], list[tuple]]:
     try:
         sql = (QUERIES_DIR / entry.file).read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -46,7 +52,7 @@ def _fmt(value) -> str:
     if isinstance(value, float):
         s = f"{value:.6g}"
         return s + ".0" if s.lstrip("-").isdigit() else s
-    return str(value).replace("|", "\\|")
+    return str(value).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
 
 
 def render_markdown(entry: QueryEntry, columns: list[str], rows: list[tuple]) -> str:
@@ -66,14 +72,15 @@ def render_markdown(entry: QueryEntry, columns: list[str], rows: list[tuple]) ->
 def run_queries(con, names: list[str], outdir: Path) -> list[str]:
     """Run the named queries, write <name>.md + <name>.json, return summaries."""
     entries = {e.name: e for e in load_manifest()}
+    unknown = [n for n in names if n not in entries]
+    if unknown:  # validate everything up front — no partial outdir
+        raise KeyError(
+            f"unknown query {unknown[0]!r} (available: {', '.join(sorted(entries))})"
+        )
     outdir.mkdir(parents=True, exist_ok=True)
     summaries = []
     for name in names:
-        entry = entries.get(name)
-        if entry is None:
-            raise KeyError(
-                f"unknown query {name!r} (available: {', '.join(sorted(entries))})"
-            )
+        entry = entries[name]
         columns, rows = run_query(con, entry)
         (outdir / f"{name}.md").write_text(
             render_markdown(entry, columns, rows), encoding="utf-8"

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python ≥3.10 stdlib + `duckdb>=1.0` (optional extra only). Tests: stdlib `unittest`. Env: `uv` (`uv venv`, `uv pip install -e ".[analytics]"`, `uv run ...`) — never plain pip.
 
-> **Doc note:** code listings below are the as-planned baseline. Hardening commits d4410ac (NULLIF guards), 41ca6a7 (strict JSON, _fmt precision), and cde3a8c (duckdb.Error handling) supersede the embedded snippets — shipped code is authoritative.
+> **Doc note:** code listings below are the as-planned baseline. Hardening commits d4410ac (NULLIF guards), 41ca6a7 (strict JSON, _fmt precision), cde3a8c (duckdb.Error handling), and the L1 review fixes (pyproject `[tool.setuptools.package-data]`, `source_sessions` column rename in signal_frequency, ORDER BY tie-breakers) supersede the embedded snippets — shipped code is authoritative.
 
 **Hard rules (from the mission):** no `import duckdb` at base-package import time; acceptance criteria in issues #1–#3 are the contract — do not edit them; no new repo-root files beyond what the issues specify; do NOT close the issues.
 

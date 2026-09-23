@@ -10,4 +10,4 @@ FROM (
     FROM tools t JOIN sessions s USING (path)
     WHERE s.error IS NULL AND s.session_date IS NOT NULL
     GROUP BY 1, 2
-) ORDER BY month, tokens DESC;
+) ORDER BY month, tokens DESC, tool;

@@ -83,6 +83,19 @@ def load_results(path: str) -> duckdb.DuckDBPyConnection:
             "UPDATE sessions SET session_date = ? WHERE rowid = ?",
             params,
         )
+    dupes = [
+        p
+        for (p,) in con.execute(
+            "SELECT path FROM sessions GROUP BY path HAVING count(*) > 1"
+        ).fetchall()
+    ]
+    if dupes:
+        sample = ", ".join(repr(p) for p in dupes[:3])
+        raise RuntimeError(
+            f"duplicate path values in {path}: {len(dupes)} path(s) appear "
+            f"more than once (e.g. {sample}) — the path-keyed joins in the "
+            f"tools and signal_labels views require unique paths"
+        )
     con.execute(
         """
         CREATE VIEW categories AS

@@ -139,7 +139,11 @@ def _run_query(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
-    entries = load_manifest()
+    try:
+        entries = load_manifest()
+    except (OSError, ValueError) as exc:
+        print(f"error: could not load query manifest: {exc}", file=sys.stderr)
+        return 1
     known = {e.name for e in entries}
     names = args.queries or [e.name for e in entries]
     unknown = [n for n in names if n not in known]
@@ -156,7 +160,7 @@ def _run_query(args: argparse.Namespace) -> int:
         return 1
     try:
         summaries = run_queries(con, names, Path(args.out))
-    except (OSError, RuntimeError, duckdb.Error) as exc:
+    except (OSError, RuntimeError, ValueError, duckdb.Error) as exc:
         print(f"error: query failed: {exc}", file=sys.stderr)
         return 1
     for line in summaries:

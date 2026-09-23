@@ -78,7 +78,9 @@ class RunnerTest(unittest.TestCase):
         con = load_results(str(FIXTURE))
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(KeyError) as cm:
-                run_queries(con, ["not_a_query"], Path(tmp))
+                run_queries(con, ["window_percentiles", "not_a_query"], Path(tmp))
+            # validation happens before any query runs — no partial outdir
+            self.assertEqual(list(Path(tmp).iterdir()), [])
         self.assertIn("not_a_query", str(cm.exception))
 
 

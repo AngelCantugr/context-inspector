@@ -21,4 +21,4 @@ SELECT source, tool, tokens,
        calls,
        tokens * 1.0 / NULLIF(calls, 0) AS tokens_per_call
 FROM combined
-ORDER BY source, tokens DESC;
+ORDER BY source, tokens DESC, tool;
