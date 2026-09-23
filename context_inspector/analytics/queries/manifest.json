@@ -1,0 +1,25 @@
+{
+  "queries": [
+    {
+      "name": "monthly_trend",
+      "file": "monthly_trend.sql",
+      "description": "Sessions, total tokens, median non-empty window per calendar month.",
+      "columns": ["month", "sessions", "total_tokens", "median_window"],
+      "params": []
+    },
+    {
+      "name": "window_percentiles",
+      "file": "window_percentiles.sql",
+      "description": "p50/p90/p99 of total_tokens per source (non-empty sessions only).",
+      "columns": ["source", "p50", "p90", "p99"],
+      "params": []
+    },
+    {
+      "name": "category_shares",
+      "file": "category_shares.sql",
+      "description": "Token-weighted share per category per source, plus source='all' grand-total rows.",
+      "columns": ["source", "category", "tokens", "share"],
+      "params": []
+    }
+  ]
+}
