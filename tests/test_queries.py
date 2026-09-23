@@ -79,6 +79,22 @@ class QueryTest(unittest.TestCase):
         self.assertAlmostEqual(rows["all"][4], 1500 / 9400, places=4)
         self.assertEqual(rows["kimi-code"][1:4], (2, 1, 450))
 
+    def test_tool_share_trend(self):
+        rows = self.query("tool_share_trend")
+        aug = {r[1]: r for r in rows if str(r[0]) == "2026-08-01"}
+        sep = {r[1]: r for r in rows if str(r[0]) == "2026-09-01"}
+        self.assertAlmostEqual(aug["exec"][3], 1.0, places=4)
+        self.assertAlmostEqual(sep["exec"][3], 880 / 1080, places=4)
+        self.assertAlmostEqual(sep["apply_patch"][3], 200 / 1080, places=4)
+
+    def test_signal_frequency(self):
+        rows = self.query("signal_frequency")
+        codex = {r[1]: r for r in rows if r[0] == "codex"}
+        self.assertEqual(codex["tool results >40% of window"][2:], (4, 0.5))
+        self.assertEqual(codex["exact duplicates present"][2:], (4, 0.25))
+        kimi = {r[1]: r for r in rows if r[0] == "kimi-code"}
+        self.assertEqual(kimi["exact duplicates present"][2:], (2, 0.5))
+
     def test_whale_table_limit_param(self):
         from context_inspector.analytics.runner import run_query
         entry = self.manifest["whale_table"]

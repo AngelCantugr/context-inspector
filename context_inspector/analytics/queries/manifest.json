@@ -41,6 +41,20 @@
       "description": "Sessions with duplicates and tokens in repeated content — count + share of all tokens, per source plus 'all'.",
       "columns": ["source", "sessions", "sessions_with_duplicates", "wasted_tokens", "share_of_tokens"],
       "params": []
+    },
+    {
+      "name": "tool_share_trend",
+      "file": "tool_share_trend.sql",
+      "description": "Per-tool share of tool-result tokens per calendar month.",
+      "columns": ["month", "tool", "tokens", "share"],
+      "params": []
+    },
+    {
+      "name": "signal_frequency",
+      "file": "signal_frequency.sql",
+      "description": "Share of sessions firing each bloat signal, per source. Mirrors the sweep report's signal_frequency block.",
+      "columns": ["source", "label", "sessions", "share"],
+      "params": []
     }
   ]
 }
