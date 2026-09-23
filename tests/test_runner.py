@@ -40,6 +40,47 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(len(summaries), 1)
         self.assertIn("window_percentiles", summaries[0])
 
+    def test_fmt_scalar_rendering(self):
+        from context_inspector.analytics.runner import _fmt, _is_number
+
+        self.assertEqual(_fmt(None), "—")
+        self.assertEqual(_fmt(800.0), "800.0")
+        self.assertEqual(_fmt(-2.5), "-2.5")
+        self.assertEqual(_fmt("a|b"), "a\\|b")
+        self.assertNotIn("e+", _fmt(276636.8))  # no scientific notation
+        self.assertEqual(_fmt(True), "True")
+        self.assertFalse(_is_number(True))  # bool column stays left-aligned
+
+    def test_monthly_trend_json_dates_are_iso_strings(self):
+        from context_inspector.analytics import load_results
+        from context_inspector.analytics.runner import run_queries
+
+        con = load_results(str(FIXTURE))
+        with tempfile.TemporaryDirectory() as tmp:
+            run_queries(con, ["monthly_trend"], Path(tmp))
+            data = json.loads((Path(tmp) / "monthly_trend.json").read_text())
+        self.assertEqual({r["month"] for r in data}, {"2026-08-01", "2026-09-01"})
+        self.assertTrue(all(isinstance(r["month"], str) for r in data))
+
+    def test_run_query_missing_sql_file_names_query(self):
+        from context_inspector.analytics.runner import QueryEntry, run_query
+
+        entry = QueryEntry(name="nope", file="does_not_exist.sql",
+                           description="", columns=[])
+        with self.assertRaises(FileNotFoundError) as cm:
+            run_query(None, entry)
+        self.assertIn("'nope'", str(cm.exception))
+
+    def test_run_queries_unknown_name_raises_named_keyerror(self):
+        from context_inspector.analytics import load_results
+        from context_inspector.analytics.runner import run_queries
+
+        con = load_results(str(FIXTURE))
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(KeyError) as cm:
+                run_queries(con, ["not_a_query"], Path(tmp))
+        self.assertIn("not_a_query", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

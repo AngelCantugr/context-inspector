@@ -44,7 +44,7 @@ def _fmt(value) -> str:
     if value is None:
         return "—"
     if isinstance(value, float):
-        s = f"{value:.4g}"
+        s = f"{value:.6g}"
         return s + ".0" if s.lstrip("-").isdigit() else s
     return str(value).replace("|", "\\|")
 
@@ -69,14 +69,18 @@ def run_queries(con, names: list[str], outdir: Path) -> list[str]:
     outdir.mkdir(parents=True, exist_ok=True)
     summaries = []
     for name in names:
-        entry = entries[name]
+        entry = entries.get(name)
+        if entry is None:
+            raise KeyError(
+                f"unknown query {name!r} (available: {', '.join(sorted(entries))})"
+            )
         columns, rows = run_query(con, entry)
         (outdir / f"{name}.md").write_text(
             render_markdown(entry, columns, rows), encoding="utf-8"
         )
         (outdir / f"{name}.json").write_text(
             json.dumps([dict(zip(columns, row)) for row in rows],
-                       indent=2, default=str),
+                       indent=2, default=str, allow_nan=False),
             encoding="utf-8",
         )
         summaries.append(f"{name}: {len(rows)} rows -> {outdir / (name + '.md')}")

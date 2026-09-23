@@ -14,6 +14,6 @@ WITH per_source AS (
     SELECT 'all', category, sum(tokens) FROM per_source GROUP BY category
 )
 SELECT source, category, tokens,
-       tokens * 1.0 / sum(tokens) OVER (PARTITION BY source) AS share
+       tokens * 1.0 / NULLIF(sum(tokens) OVER (PARTITION BY source), 0) AS share
 FROM combined
 ORDER BY source, tokens DESC;

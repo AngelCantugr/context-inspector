@@ -17,7 +17,7 @@ WITH scoped AS (
     SELECT 'all', tool, sum(tokens), sum(calls) FROM scoped GROUP BY tool
 )
 SELECT source, tool, tokens,
-       tokens * 1.0 / sum(tokens) OVER (PARTITION BY source) AS share,
+       tokens * 1.0 / NULLIF(sum(tokens) OVER (PARTITION BY source), 0) AS share,
        calls,
        tokens * 1.0 / NULLIF(calls, 0) AS tokens_per_call
 FROM combined

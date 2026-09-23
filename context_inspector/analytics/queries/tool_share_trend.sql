@@ -3,7 +3,7 @@
 -- caveats: only sessions with a derivable session_date (see monthly_trend).
 --   Detects e.g. shell output growing over time. Error records excluded.
 SELECT month, tool, tokens,
-       tokens * 1.0 / sum(tokens) OVER (PARTITION BY month) AS share
+       tokens * 1.0 / NULLIF(sum(tokens) OVER (PARTITION BY month), 0) AS share
 FROM (
     SELECT date_trunc('month', s.session_date)::DATE AS month,
            t.tool, sum(t.tokens) AS tokens
