@@ -8,4 +8,4 @@ SELECT s.path, s.source, c.category, c.tokens AS category_tokens,
 FROM categories c JOIN sessions s USING (path)
 WHERE s.error IS NULL AND s.total_tokens > 0
   AND c.tokens * 100.0 / s.total_tokens > ?
-ORDER BY share DESC;
+ORDER BY share DESC, s.path;

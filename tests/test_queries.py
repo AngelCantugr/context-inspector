@@ -115,8 +115,9 @@ class QueryTest(unittest.TestCase):
 
     def test_manifest_files_exist(self):
         from context_inspector.analytics.runner import QUERIES_DIR
-        for entry in self.manifest.values():
-            self.assertTrue((QUERIES_DIR / entry.file).exists(), entry.file)
+        manifest_files = {entry.file for entry in self.manifest.values()}
+        sql_files = {f.name for f in QUERIES_DIR.glob("*.sql")}
+        self.assertEqual(manifest_files, sql_files)
 
     def test_whale_table_limit_param(self):
         from context_inspector.analytics.runner import run_query
