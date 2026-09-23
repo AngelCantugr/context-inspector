@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from .adapters import SOURCES, load_any
 from .analyzer import analyze, render_text, to_dict
@@ -57,7 +58,28 @@ def main(argv: list[str] | None = None) -> int:
     p_sweep.add_argument("--save", metavar="PATH", help="also write the report to a file")
     _add_tokenizer_args(p_sweep)
 
+    p_query = sub.add_parser(
+        "query", help="run the canonical SQL query pack over sweep results "
+        "(requires the [analytics] extra)"
+    )
+    p_query.add_argument("sweep_results", help="path to sweep_results.jsonl")
+    p_query.add_argument(
+        "--query", dest="queries", action="append", metavar="NAME",
+        help="run only this query (repeatable; default: all ten)",
+    )
+    p_query.add_argument(
+        "--out", default="reports/queries", metavar="DIR",
+        help="output directory (default: reports/queries)",
+    )
+    p_query.add_argument(
+        "--json", action="store_true",
+        help="also print full JSON results to stdout",
+    )
+
     args = parser.parse_args(argv)
+
+    if args.command == "query":
+        return _run_query(args)
 
     try:
         tokenizer = get_tokenizer(args.tokenizer, args.encoding)
@@ -73,8 +95,6 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(render_sweep(results, agg))
         if args.save:
-            from pathlib import Path
-
             save_path = Path(args.save)
             if save_path.parent != Path("."):
                 save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -102,6 +122,36 @@ def main(argv: list[str] | None = None) -> int:
         origin = f"{source} session log" if source else "openai json"
         print(f"input format: {origin} · tokenizer: {args.tokenizer}\n")
         print(render_text(report))
+    return 0
+
+
+def _run_query(args: argparse.Namespace) -> int:
+    try:
+        from .analytics import load_results
+        from .analytics.runner import load_manifest, run_queries
+    except RuntimeError as exc:  # duckdb missing — friendly install hint
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    known = {e.name for e in load_manifest()}
+    names = args.queries or [e.name for e in load_manifest()]
+    unknown = [n for n in names if n not in known]
+    if unknown:
+        print(
+            f"error: unknown query {unknown[0]!r} (available: {', '.join(sorted(known))})",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        con = load_results(args.sweep_results)
+    except (OSError, RuntimeError) as exc:
+        print(f"error: could not load sweep results: {exc}", file=sys.stderr)
+        return 1
+    summaries = run_queries(con, names, Path(args.out))
+    for line in summaries:
+        print(line)
+    if args.json:
+        for name in names:
+            print((Path(args.out) / f"{name}.json").read_text(encoding="utf-8"))
     return 0
 
 
