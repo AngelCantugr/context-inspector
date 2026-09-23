@@ -64,5 +64,29 @@ class FriendlyErrorTest(unittest.TestCase):
         self.assertTrue(callable(context_inspector.cli.main))
 
 
+class MissingDuckDBTest(unittest.TestCase):
+    def test_friendly_error_without_duckdb(self):
+        import subprocess, sys
+        code = (
+            "import sys\n"
+            "class Blocker:\n"
+            "    def find_spec(self, name, path=None, target=None):\n"
+            "        if name == 'duckdb':\n"
+            "            raise ImportError('blocked')\n"
+            "        return None\n"
+            "sys.meta_path.insert(0, Blocker())\n"
+            "sys.modules.pop('duckdb', None)\n"
+            "from context_inspector.analytics import load_results\n"
+            "try:\n"
+            "    load_results('x.jsonl')\n"
+            "except RuntimeError as e:\n"
+            "    print(e)\n"
+        )
+        out = subprocess.run(
+            [sys.executable, "-c", code], capture_output=True, text=True
+        )
+        self.assertIn("[analytics]", out.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
