@@ -21,6 +21,7 @@ validation and error handling stay stdlib-only here.
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 from pathlib import Path
 
@@ -108,15 +109,27 @@ def run_charts(*, figures: list[str] | None = None, sweep: str | None = None,
     message on every loud-failure path; the CLI prints them as
     ``error: ...`` and exits 1 (unknown figure names are pre-validated by
     the caller, which exits 2 like the ``query`` subcommand).
+
+    ``window_growth`` needs ``--session``; when it arrives only via the
+    default figure set (not named explicitly in ``figures``) it is skipped
+    with a stderr note so the remaining figures still render, and the run
+    succeeds. Naming it explicitly without ``--session`` stays a loud
+    error.
     """
+    explicitly_named = figures is not None
     requested = figures or list(FIGURE_NAMES)
     unknown = [f for f in requested if f not in FIGURE_NAMES]
     if unknown:
         raise ValueError(f"unknown figure {unknown[0]!r}")
 
-    if "window_growth" in requested:
-        if not session:
+    if "window_growth" in requested and not session:
+        if explicitly_named:
             raise ValueError("figure 'window_growth' requires --session <log>")
+        requested = [f for f in requested if f != "window_growth"]
+        print("skipping window_growth (requires --session <log>)",
+              file=sys.stderr)
+
+    if "window_growth" in requested:
         session_path = Path(session)
         if not session_path.exists():
             raise FileNotFoundError(f"session log not found: {session}")

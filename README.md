@@ -87,6 +87,8 @@ python -m context_inspector charts --sweep sweep_results.jsonl \
     --session ~/.codex/sessions/<date>/rollout-*.jsonl
 
 # or render from existing query output (after `query` wrote reports/queries/)
+# — renders the three query-driven figures and skips window_growth
+# (it plots a single session and needs --session) with a note on stderr
 python -m context_inspector charts
 
 # render a subset
@@ -98,6 +100,12 @@ holding the exact data rendered, so every figure is auditable and
 regenerates bit-for-bit. `window_growth` plots a single session and requires
 `--session`; the other three read query output, re-running the L1 queries
 into a temp dir when `--sweep` is given.
+
+## Tests
+
+```bash
+uv run python -m unittest discover tests
+```
 
 ## What it measures
 

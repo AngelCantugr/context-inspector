@@ -171,6 +171,34 @@ class ChartsCliTest(unittest.TestCase):
             for figure in QUERY_FIGURES:
                 self.assertTrue((Path(tmp) / "figs" / f"{figure}.png").exists())
 
+    def test_default_charts_skips_window_growth_without_session(self):
+        # Default figure set without --session: window_growth arrives only
+        # via the default, so it is skipped with a stderr note (not a hard
+        # error) and the other three figures still render.
+        with tempfile.TemporaryDirectory() as tmp:
+            queries_dir = Path(tmp) / DEFAULT_QUERIES_DIR
+            queries_dir.mkdir(parents=True)
+            for src in FIXTURE_QUERIES.glob("*.json"):
+                shutil.copy(src, queries_dir / src.name)
+            cwd = os.getcwd()
+            try:
+                os.chdir(tmp)
+                with redirect_stdout(io.StringIO()), \
+                        redirect_stderr(io.StringIO()) as err:
+                    rc = main(["charts", "--out", "figs"])
+            finally:
+                os.chdir(cwd)
+            self.assertEqual(rc, 0)
+            self.assertIn(
+                "skipping window_growth (requires --session <log>)",
+                err.getvalue(),
+            )
+            for figure in QUERY_FIGURES:
+                self.assertTrue((Path(tmp) / "figs" / f"{figure}.png").exists())
+            self.assertFalse(
+                (Path(tmp) / "figs" / "window_growth.png").exists()
+            )
+
     def test_window_growth_from_sample_transcript(self):
         with tempfile.TemporaryDirectory() as tmp:
             with redirect_stdout(io.StringIO()):
