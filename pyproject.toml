@@ -21,9 +21,13 @@ Repository = "https://github.com/AngelCantugr/context-inspector"
 
 [project.optional-dependencies]
 tiktoken = ["tiktoken>=0.5"]
+analytics = ["duckdb>=1.0"]
 
 [project.scripts]
 context-inspector = "context_inspector.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["context_inspector*"]
+
+[tool.setuptools.package-data]
+context_inspector = ["analytics/queries/*.sql", "analytics/queries/manifest.json"]

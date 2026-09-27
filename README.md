@@ -59,6 +59,22 @@ Supported session logs: **Claude Code** (`~/.claude/projects/**`), **Codex CLI**
 limitations (e.g. Kimi's wire log stores only hashes of the system prompt,
 Claude Code subagent sidechains are skipped).
 
+## Analytics (optional, DuckDB)
+
+The `query` subcommand runs a canonical pack of ten SQL queries over
+`sweep_results.jsonl` (produced by `python sweep_runner.py`) and writes
+markdown + JSON tables per query:
+
+```bash
+pip install ".[analytics]"     # adds duckdb; base CLI stays stdlib-only
+python -m context_inspector query sweep_results.jsonl
+python -m context_inspector query sweep_results.jsonl --query tool_ranking --out reports/queries
+```
+
+Outputs land in `reports/queries/<name>.md` (human) and `<name>.json`
+(machine). The queries themselves — one documented `.sql` file each — live in
+`context_inspector/analytics/queries/`.
+
 ## What it measures
 
 - **Per-message tokens** with cumulative window growth

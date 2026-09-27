@@ -8,3 +8,5 @@ dist/
 sweep_results.jsonl
 tool_attribution.jsonl
 reports/
+uv.lock
+!tests/fixtures/sweep_results.jsonl
