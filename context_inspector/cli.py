@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     p_query.add_argument("sweep_results", help="path to sweep_results.jsonl")
     p_query.add_argument(
         "--query", dest="queries", action="append", metavar="NAME",
-        help="run only this query (repeatable; default: all ten)",
+        help="run only this query (repeatable; default: all)",
     )
     p_query.add_argument(
         "--out", default="reports/queries", metavar="DIR",
