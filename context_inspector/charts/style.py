@@ -47,6 +47,24 @@ SOURCE_COLORS = {
 }
 SOURCE_ORDER = ("claude-code", "codex", "kimi-code")
 
+# Neutral gray for elements that carry no category/source meaning: the
+# fallback color for unknown data keys, and (deliberately, in tool_ranking)
+# every ranked bar that is not the grouped shell bar — the single shared
+# neutral keeps "other/unknown" visually identical across figures.
+NEUTRAL_COLOR = "#777777"
+
+# Neutral ink for annotation text and connector arrows — dark enough to
+# read on white, light enough to stay visually behind the data.
+TEXT_COLOR = "#222222"
+MUTED_TEXT_COLOR = "#555555"
+
+# Overview-panel chrome for the monthly trend (#8): volume bars and the
+# sessions overlay line. Same values as the system / tool-result category
+# colors, but named separately so the trend figure doesn't borrow category
+# semantics for panel chrome.
+OVERVIEW_BAR_COLOR = "#7F8C9B"
+OVERVIEW_LINE_COLOR = "#D55E00"
+
 FONT_FAMILY = "DejaVu Sans"  # matplotlib default: deterministic everywhere
 FONT_SIZES = {
     "title": 13,
@@ -112,7 +130,7 @@ def add_footnote(fig, text: str, *, wrap: int = 110) -> None:
         0.01,
         "\n".join(textwrap.wrap(text, width=wrap)),
         fontsize=FONT_SIZES["footnote"],
-        color="#555555",
+        color=MUTED_TEXT_COLOR,
         ha="left",
         va="bottom",
         linespacing=1.4,

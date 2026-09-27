@@ -39,6 +39,7 @@ from pathlib import Path
 from ..analyzer import MessageStat, Report, analyze
 from . import style
 from .style import plt
+import matplotlib.ticker as mtick  # noqa: E402  (module-level, like style.py)
 
 FIGURE_NAME = "window_growth"
 TITLE = "Context window growth over the session"
@@ -148,12 +149,19 @@ def render_window_growth(
     # anyway — the curve is flat there).
     ys = [max(s.cumulative, 1) for s in stats]
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.5))
-    fig.subplots_adjust(left=0.10, right=0.97, top=0.90, bottom=0.24)
+    fig, ax = plt.subplots(figsize=(7.0, 4.5))
+    # Left margin must swallow 9pt thousands-formatted log-scale labels
+    # ("10,000,000" is ~108px at 150 DPI) plus the y-label; tighter margins
+    # clip the tick labels themselves.
+    fig.subplots_adjust(left=0.14, right=0.97, top=0.90, bottom=0.24)
 
     ax.plot(xs, ys, color=_LINE_COLOR, linewidth=1.4, zorder=3)
     ax.set_yscale("log")
     ax.yaxis.set_major_formatter(style.thousands_formatter())
+    # On a log axis the default minor formatter switches to sci-notation
+    # ("2 × 10²") whenever the view spans about one decade, clashing with
+    # the thousands-formatted major labels — keep minor ticks unlabeled.
+    ax.yaxis.set_minor_formatter(mtick.NullFormatter())
     ax.set_xlabel("message index")
     ax.set_ylabel("cumulative tokens (log scale)")
     ax.set_title(title, loc="left", fontweight="bold")
@@ -180,7 +188,8 @@ def render_window_growth(
         offsets = (_LABEL_OFFSETS_NEAR_TOP if y >= near_top_floor
                    else _LABEL_OFFSETS_POINTS)
         ax.plot([stat.index], [y], marker="o", markersize=5,
-                color=style.CATEGORY_COLORS.get(stat.category, "#777777"),
+                color=style.CATEGORY_COLORS.get(stat.category,
+                                                style.NEUTRAL_COLOR),
                 zorder=4)
         ax.annotate(
             jump_label(stat, name),
@@ -190,7 +199,7 @@ def render_window_growth(
             fontsize=style.FONT_SIZES["segment_label"],
             ha="left",
             arrowprops={"arrowstyle": "-", "linewidth": 0.7,
-                        "color": "#555555"},
+                        "color": style.MUTED_TEXT_COLOR},
             zorder=5,
         )
         rendered_jumps.append(

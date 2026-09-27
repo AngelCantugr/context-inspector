@@ -51,7 +51,7 @@ def _label_color(hex_color: str) -> str:
         int(hex_color.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4)
     ]
     luminance = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
-    return "white" if luminance < 0.5 else "#222222"
+    return "white" if luminance < 0.5 else style.TEXT_COLOR
 
 
 def _footnote(data_date: str | None) -> str:
@@ -108,7 +108,7 @@ def render_category_composition(
         for category in categories:
             tokens = tokens_by_cat.get(category, 0)
             share = tokens / total if total else 0.0
-            color = style.CATEGORY_COLORS.get(category, "#777777")
+            color = style.CATEGORY_COLORS.get(category, style.NEUTRAL_COLOR)
             ax.bar(x, share, width, bottom=bottom, color=color, edgecolor="white",
                    linewidth=0.5)
             if share >= LABEL_THRESHOLD:
@@ -137,7 +137,7 @@ def render_category_composition(
     handles = [
         plt.Rectangle(
             (0, 0), 1, 1,
-            color=style.CATEGORY_COLORS.get(category, "#777777"),
+            color=style.CATEGORY_COLORS.get(category, style.NEUTRAL_COLOR),
         )
         for category in categories
     ]

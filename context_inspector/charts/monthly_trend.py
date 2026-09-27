@@ -136,24 +136,29 @@ def render_monthly_trend(
     fig, (ax_top, ax_bottom) = plt.subplots(
         2, 1, figsize=(7.0, 6.5), sharex=True
     )
-    fig.subplots_adjust(left=0.13, right=0.89, top=0.93, bottom=0.18)
+    # Left margin must swallow 9pt thousands-formatted tick labels
+    # ("70,000,000" is ~108px at 150 DPI) plus the y-label; at left=0.13 the
+    # auto label positioner pushed the y-labels off-figure.
+    fig.subplots_adjust(left=0.15, right=0.89, top=0.93, bottom=0.18)
 
     # Top panel: tokens (bars, left axis) + sessions (line, right axis).
     x = range(len(months))
     ax_top.bar(x, [r["total_tokens"] for r in overview], width=0.6,
-               color="#7F8C9B", edgecolor="white", linewidth=0.5,
-               label="total tokens")
+               color=style.OVERVIEW_BAR_COLOR, edgecolor="white",
+               linewidth=0.5, label="total tokens")
     ax_top.yaxis.set_major_formatter(style.thousands_formatter())
     ax_top.set_ylabel("total tokens")
     ax_sessions = ax_top.twinx()
-    ax_sessions.plot(x, [r["sessions"] for r in overview], color="#D55E00",
+    ax_sessions.plot(x, [r["sessions"] for r in overview],
+                     color=style.OVERVIEW_LINE_COLOR,
                      marker="o", linewidth=1.5, label="sessions")
     ax_sessions.set_ylabel("sessions")
     ax_sessions.spines["top"].set_visible(False)
     ax_top.set_title(title, loc="left", fontweight="bold")
     handles = [
-        plt.Rectangle((0, 0), 1, 1, color="#7F8C9B"),
-        plt.Line2D([], [], color="#D55E00", marker="o", linewidth=1.5),
+        plt.Rectangle((0, 0), 1, 1, color=style.OVERVIEW_BAR_COLOR),
+        plt.Line2D([], [], color=style.OVERVIEW_LINE_COLOR, marker="o",
+                   linewidth=1.5),
     ]
     ax_top.legend(handles, ["total tokens", "sessions"], loc="upper left")
 
@@ -166,7 +171,7 @@ def render_monthly_trend(
     rendered_sources = []
     for source in _sorted_sources(set(by_source)):
         slots = by_source[source]
-        color = style.SOURCE_COLORS.get(source, "#777777")
+        color = style.SOURCE_COLORS.get(source, style.NEUTRAL_COLOR)
         xs = [i for i, slot in enumerate(slots) if slot is not None]
         ys = [slots[i]["median_window"] for i in xs]
         if not xs:
@@ -189,7 +194,6 @@ def render_monthly_trend(
     ax_bottom.set_xticks(list(x))
     ax_bottom.set_xticklabels(months, rotation=45, ha="right")
     ax_bottom.set_xlabel("month")
-    fig.align_ylabels([ax_top, ax_bottom])
     style.add_footnote(fig, _footnote(data_date))
 
     sidecar = {

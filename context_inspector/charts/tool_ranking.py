@@ -9,6 +9,12 @@ tool concepts, not harness naming accidents. Ungrouped per-source numbers
 are preserved verbatim in the sidecar JSON, so the figure stays auditable
 against the raw query output.
 
+Color is information here: the grouped ``shell (all harnesses)`` bar is
+drawn in the tool-result vermillion so the single aggregated bar stands
+out, and every other bar uses the shared neutral gray
+(:data:`style.NEUTRAL_COLOR`) because ranked tools carry no category
+meaning.
+
 Every bar is annotated with total tokens (compact), share of tool-result
 tokens, and tokens per call — the last one exposes high-total/high-tpc
 outliers (e.g. a REPL that returns whole transcripts per call) next to
@@ -147,7 +153,12 @@ def _per_source_ungrouped(rows: list[dict]) -> dict[str, list[dict]]:
 
 
 def _footnote(data_date: str | None) -> str:
-    parts = [f"Note: {DATA_NOTE}.", ESTIMATOR_NOTE.capitalize() + "."]
+    # Sentence-case the first letter only: str.capitalize() would also
+    # lowercase the "CJK"/"base64" inside the parenthetical.
+    parts = [
+        f"Note: {DATA_NOTE}.",
+        ESTIMATOR_NOTE[0].upper() + ESTIMATOR_NOTE[1:] + ".",
+    ]
     if data_date:
         parts.append(f"Data as of {data_date}.")
     return " ".join(parts)
@@ -177,8 +188,12 @@ def render_tool_ranking(
     # Barh draws bottom-up; reverse so the top tool sits at the top.
     order = list(reversed(ranked))
     y = range(len(order))
+    # The grouped shell bar gets the tool-result vermillion so the single
+    # aggregated bar stands out; every other bar is the shared neutral
+    # gray — ranked tools carry no category meaning.
     colors = [
-        style.CATEGORY_COLORS["tool result"] if row["grouped"] else "#777777"
+        style.CATEGORY_COLORS["tool result"] if row["grouped"]
+        else style.NEUTRAL_COLOR
         for row in order
     ]
     ax.barh(y, [row["tokens"] for row in order], 0.62, color=colors,
@@ -197,7 +212,7 @@ def render_tool_ranking(
             va="center",
             ha="left",
             fontsize=style.FONT_SIZES["segment_label"],
-            color="#222222",
+            color=style.TEXT_COLOR,
         )
 
     ax.set_yticks(list(y))
