@@ -1,0 +1,74 @@
+[
+  {
+    "source": "all",
+    "tool": "Bash",
+    "tokens": 1750,
+    "share": 0.43424317617866004,
+    "calls": 9,
+    "tokens_per_call": 194.44444444444446
+  },
+  {
+    "source": "all",
+    "tool": "exec",
+    "tokens": 1680,
+    "share": 0.41687344913151364,
+    "calls": 8,
+    "tokens_per_call": 210.0
+  },
+  {
+    "source": "all",
+    "tool": "Read",
+    "tokens": 400,
+    "share": 0.09925558312655088,
+    "calls": 2,
+    "tokens_per_call": 200.0
+  },
+  {
+    "source": "all",
+    "tool": "apply_patch",
+    "tokens": 200,
+    "share": 0.04962779156327544,
+    "calls": 2,
+    "tokens_per_call": 100.0
+  },
+  {
+    "source": "claude-code",
+    "tool": "Bash",
+    "tokens": 1300,
+    "share": 0.7647058823529411,
+    "calls": 6,
+    "tokens_per_call": 216.66666666666666
+  },
+  {
+    "source": "claude-code",
+    "tool": "Read",
+    "tokens": 400,
+    "share": 0.23529411764705882,
+    "calls": 2,
+    "tokens_per_call": 200.0
+  },
+  {
+    "source": "codex",
+    "tool": "exec",
+    "tokens": 1680,
+    "share": 0.8936170212765957,
+    "calls": 8,
+    "tokens_per_call": 210.0
+  },
+  {
+    "source": "codex",
+    "tool": "apply_patch",
+    "tokens": 200,
+    "share": 0.10638297872340426,
+    "calls": 2,
+    "tokens_per_call": 100.0
+  },
+  {
+    "source": "kimi-code",
+    "tool": "Bash",
+    "tokens": 450,
+    "share": 1.0,
+    "calls": 3,
+    "tokens_per_call": 150.0
+  }
+]

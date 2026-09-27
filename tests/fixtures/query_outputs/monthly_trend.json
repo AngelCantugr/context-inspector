@@ -1,0 +1,14 @@
+[
+  {
+    "month": "2026-08-01",
+    "sessions": 2,
+    "total_tokens": 1500,
+    "median_window": 750.0
+  },
+  {
+    "month": "2026-09-01",
+    "sessions": 2,
+    "total_tokens": 2600,
+    "median_window": 1300.0
+  }
+]

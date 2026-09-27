@@ -1,4 +1,4 @@
-"""CLI entry point: python -m context_inspector {analyze,sweep,query} ..."""
+"""CLI entry point: python -m context_inspector {analyze,sweep,query,charts} ..."""
 
 from __future__ import annotations
 
@@ -76,10 +76,38 @@ def main(argv: list[str] | None = None) -> int:
         help="also print full JSON results to stdout",
     )
 
+    p_charts = sub.add_parser(
+        "charts", help="render the L2 figure pack (requires the "
+        "[analytics] extra)"
+    )
+    p_charts.add_argument(
+        "--sweep", metavar="PATH",
+        help="rerun the needed L1 queries from this sweep_results.jsonl "
+        "(default: read existing reports/queries/<name>.json)",
+    )
+    p_charts.add_argument(
+        "--session", metavar="LOG",
+        help="session log for the window_growth figure",
+    )
+    p_charts.add_argument(
+        "--from", dest="source", choices=["auto", *SOURCES], default="auto",
+        help="input format for --session (default: auto-detect from the path)",
+    )
+    p_charts.add_argument(
+        "--out", default="reports/figures", metavar="DIR",
+        help="output directory (default: reports/figures)",
+    )
+    p_charts.add_argument(
+        "--figure", dest="figures", action="append", metavar="NAME",
+        help="render only this figure (repeatable; default: all four)",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "query":
         return _run_query(args)
+    if args.command == "charts":
+        return _run_charts(args)
 
     try:
         tokenizer = get_tokenizer(args.tokenizer, args.encoding)
@@ -168,6 +196,34 @@ def _run_query(args: argparse.Namespace) -> int:
     if args.json:
         for name in names:
             print((Path(args.out) / f"{name}.json").read_text(encoding="utf-8"))
+    return 0
+
+
+def _run_charts(args: argparse.Namespace) -> int:
+    from .charts.runner import FIGURE_NAMES, run_charts
+
+    requested = args.figures or list(FIGURE_NAMES)
+    unknown = [f for f in requested if f not in FIGURE_NAMES]
+    if unknown:
+        print(
+            f"error: unknown figure {unknown[0]!r} (available: "
+            f"{', '.join(FIGURE_NAMES)})",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        rendered = run_charts(
+            figures=args.figures,
+            sweep=args.sweep,
+            session=args.session,
+            source=args.source,
+            out_dir=Path(args.out),
+        )
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    for figure, png in rendered:
+        print(f"{figure}: {png}")
     return 0
 
 

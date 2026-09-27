@@ -1,0 +1,92 @@
+[
+  {
+    "source": "all",
+    "category": "tool result",
+    "tokens": 4030,
+    "share": 0.42872340425531913
+  },
+  {
+    "source": "all",
+    "category": "user",
+    "tokens": 2170,
+    "share": 0.23085106382978723
+  },
+  {
+    "source": "all",
+    "category": "assistant",
+    "tokens": 2000,
+    "share": 0.2127659574468085
+  },
+  {
+    "source": "all",
+    "category": "system",
+    "tokens": 1200,
+    "share": 0.1276595744680851
+  },
+  {
+    "source": "claude-code",
+    "category": "tool result",
+    "tokens": 1700,
+    "share": 0.4146341463414634
+  },
+  {
+    "source": "claude-code",
+    "category": "user",
+    "tokens": 900,
+    "share": 0.21951219512195122
+  },
+  {
+    "source": "claude-code",
+    "category": "system",
+    "tokens": 800,
+    "share": 0.1951219512195122
+  },
+  {
+    "source": "claude-code",
+    "category": "assistant",
+    "tokens": 700,
+    "share": 0.17073170731707318
+  },
+  {
+    "source": "codex",
+    "category": "tool result",
+    "tokens": 1880,
+    "share": 0.4585365853658537
+  },
+  {
+    "source": "codex",
+    "category": "assistant",
+    "tokens": 1000,
+    "share": 0.24390243902439024
+  },
+  {
+    "source": "codex",
+    "category": "user",
+    "tokens": 820,
+    "share": 0.2
+  },
+  {
+    "source": "codex",
+    "category": "system",
+    "tokens": 400,
+    "share": 0.0975609756097561
+  },
+  {
+    "source": "kimi-code",
+    "category": "tool result",
+    "tokens": 450,
+    "share": 0.375
+  },
+  {
+    "source": "kimi-code",
+    "category": "user",
+    "tokens": 450,
+    "share": 0.375
+  },
+  {
+    "source": "kimi-code",
+    "category": "assistant",
+    "tokens": 300,
+    "share": 0.25
+  }
+]
