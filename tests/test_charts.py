@@ -26,6 +26,8 @@ ROWS = [
     {"source": "codex", "category": "assistant", "tokens": 1000, "share": 0.2439},
     {"source": "codex", "category": "user", "tokens": 820, "share": 0.2},
     {"source": "codex", "category": "system", "tokens": 400, "share": 0.0976},
+    {"source": "codex", "category": "harness context", "tokens": 150, "share": 0.0366},
+    {"source": "codex", "category": "developer", "tokens": 300, "share": 0.0732},
     {"source": "kimi-code", "category": "tool result", "tokens": 450, "share": 0.375},
     {"source": "kimi-code", "category": "user", "tokens": 450, "share": 0.375},
     {"source": "kimi-code", "category": "assistant", "tokens": 300, "share": 0.25},
@@ -51,7 +53,8 @@ class CategoryCompositionTest(unittest.TestCase):
             )
             self.assertEqual(
                 sidecar["category_order"],
-                ["system", "user", "assistant", "tool result"],
+                ["system", "harness context", "developer", "user",
+                 "assistant", "tool result"],
             )
 
     def test_missing_categories_render_as_zero_segments(self):
@@ -73,6 +76,18 @@ class CategoryCompositionTest(unittest.TestCase):
                     if c["category"] == "tool result"
                 )
                 self.assertEqual(tool, max(shares))
+
+    def test_developer_segment_present_for_codex_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _, sidecar = self._render(tmp)
+            by_source = {s["source"]: s for s in sidecar["sources"]}
+            codex = {c["category"]: c for c in by_source["codex"]["categories"]}
+            self.assertEqual(codex["developer"]["tokens"], 300)
+            claude = {
+                c["category"]: c for c in by_source["claude-code"]["categories"]
+            }
+            self.assertEqual(claude["developer"]["tokens"], 0)  # absent, not an error
+            self.assertEqual(claude["developer"]["share"], 0.0)
 
     def test_grand_total_rows_ignored_and_shares_recomputed(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -28,7 +28,8 @@ TITLE = "Category composition per harness"
 DATA_NOTE = (
     "shares are token-weighted across sessions; system/harness-context "
     "visibility differs per harness (Codex exposes it; Claude Code only via "
-    "prompt_snapshot, ~26% of logs; Kimi Code hash-only)"
+    "prompt_snapshot, ~26% of logs; Kimi Code hash-only); Codex developer-role "
+    "messages are counted as their own category"
 )
 
 LABEL_THRESHOLD = 0.05  # label segments >= 5% of the bar
@@ -96,7 +97,9 @@ def render_category_composition(
     )
 
     fig, ax = plt.subplots(figsize=(7.0, 4.5))
-    fig.subplots_adjust(left=0.10, right=0.98, top=0.90, bottom=0.16)
+    # Room for the outside-right legend: six category entries live between
+    # right=0.72 and the figure edge, clear of the bars and the footnote.
+    fig.subplots_adjust(left=0.10, right=0.72, top=0.90, bottom=0.16)
 
     width = 0.55
     rendered: list[dict] = []

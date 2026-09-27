@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import math
 import tempfile
 import unittest
 from pathlib import Path
 
 from context_inspector.charts.monthly_trend import (
+    _line_series,
     _prep_by_source,
     _prep_overview,
     render_monthly_trend,
@@ -78,6 +80,34 @@ class PrepBySourceTest(unittest.TestCase):
         self.assertIsNone(prepared["kimi-code"][2])
         # kimi-code never reaches 3 sessions in any month -> all gaps.
         self.assertTrue(all(s is None for s in prepared["kimi-code"]))
+
+
+class LineSeriesTest(unittest.TestCase):
+    def test_gap_months_become_nan_and_break_the_line(self):
+        slots = [
+            {"month": "2026-07", "median_window": 500.0, "sessions": 1},
+            None,
+            {"month": "2026-09", "median_window": 2000.0, "sessions": 6},
+        ]
+        xs, ys = _line_series(slots)
+        self.assertEqual(xs, [0, 1, 2])
+        self.assertEqual(ys[0], 500.0)
+        self.assertTrue(math.isnan(ys[1]))  # gap: line must not bridge it
+        self.assertEqual(ys[2], 2000.0)
+
+    def test_single_qualifying_month_is_a_lone_point(self):
+        slots = [None, {"month": "2026-08", "median_window": 3.0,
+                        "sessions": 3}, None]
+        xs, ys = _line_series(slots)
+        self.assertEqual(xs, [0, 1, 2])
+        self.assertTrue(math.isnan(ys[0]))
+        self.assertEqual(ys[1], 3.0)
+        self.assertTrue(math.isnan(ys[2]))
+
+    def test_all_gap_months_are_all_nan(self):
+        xs, ys = _line_series([None, None])
+        self.assertEqual(xs, [0, 1])
+        self.assertTrue(all(math.isnan(y) for y in ys))
 
 
 @unittest.skipUnless(mpl_available, "matplotlib not installed")

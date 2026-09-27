@@ -24,16 +24,22 @@ DPI = 150  # web figures
 
 # Fixed semantic order for stacked category figures — identical segment
 # order across bars, never input order. Unknown categories seen in data
-# (e.g. "tool call args") render after these, alphabetically.
-CATEGORY_ORDER = ("system", "harness context", "user", "assistant", "tool result")
+# (e.g. "tool call args") render after these, alphabetically. "developer"
+# (OpenAI's developer-role messages, Codex only) sits between the harness-
+# injected tiers and the conversation proper.
+CATEGORY_ORDER = (
+    "system", "harness context", "developer", "user", "assistant",
+    "tool result",
+)
 
 # One color per category. Tool result is visually dominant by design and
 # gets the strong vermillion accent; system/harness context are muted
-# grays/slates; user/assistant are mid-tone Okabe-Ito blue/green
-# (colorblind-reasonable).
+# grays/slates; user/assistant are mid-tone Okabe-Ito blue/green; developer
+# is Okabe-Ito reddish purple (#CC79A7) — distinct from every other segment.
 CATEGORY_COLORS = {
     "system": "#7F8C9B",
     "harness context": "#B8C2CC",
+    "developer": "#CC79A7",
     "user": "#0072B2",
     "assistant": "#009E73",
     "tool result": "#D55E00",
@@ -117,18 +123,47 @@ def percent_formatter() -> mtick.PercentFormatter:
     return mtick.PercentFormatter(xmax=1.0, decimals=0)
 
 
+def _wrap_text(text: str, width: int) -> list[str]:
+    """Deterministic fixed-width wrap.
+
+    Greedy on spaces. A token longer than ``width`` (typically a session
+    path in a footnote) is split at "/" separators near the fill edge so
+    paths break at slashes, never mid-token; a separator-free piece still
+    longer than ``width`` is truncated in the middle with an ellipsis.
+    """
+    lines: list[str] = []
+    for paragraph in text.split("\n"):
+        line = ""
+        for token in paragraph.split(" "):
+            if len(token) > width:
+                keep = width - 1  # room for the ellipsis
+                head = (keep + 1) // 2
+                token = token[:head] + "…" + token[len(token) - (keep - head):]
+            while line and len(line) + 1 + len(token) > width:
+                # Fill what fits, breaking the token at a path separator
+                # if one lands inside the remaining room.
+                room = width - len(line) - 1
+                cut = token.rfind("/", 0, room + 1)
+                if cut > 0:
+                    line = f"{line} {token[:cut + 1]}"
+                    token = token[cut + 1:]
+                lines.append(line)
+                line = ""
+            line = f"{line} {token}" if line else token
+        lines.append(line)
+    return lines
+
+
 def add_footnote(fig, text: str, *, wrap: int = 110) -> None:
     """Small source/caveat line at the figure bottom (every figure carries one).
 
     Long notes wrap at ``wrap`` characters so they never run off the
     figure edge; wrapping is fixed-width, hence deterministic.
     """
-    import textwrap
-
     fig.text(
         0.01,
         0.01,
-        "\n".join(textwrap.wrap(text, width=wrap)),
+        "\n".join(_wrap_text(text, wrap)),
         fontsize=FONT_SIZES["footnote"],
         color=MUTED_TEXT_COLOR,
         ha="left",

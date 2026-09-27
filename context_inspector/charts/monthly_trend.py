@@ -27,6 +27,7 @@ windows caveat plus the estimator caveat, and an optional ``data_date``
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from . import style
@@ -101,6 +102,24 @@ def _sorted_sources(present: set[str]) -> list[str]:
     return known + sorted(present - set(style.SOURCE_ORDER))
 
 
+def _line_series(
+    slots: list[dict | None],
+) -> tuple[list[int], list[float]]:
+    """One (x, y) per shared-axis month; gap months become NaN.
+
+    NaN breaks the plotted line at an omitted month instead of bridging
+    across the gap, and a source with a single qualifying month still
+    renders as an isolated marker.
+    """
+    return (
+        list(range(len(slots))),
+        [
+            slot["median_window"] if slot is not None else float("nan")
+            for slot in slots
+        ],
+    )
+
+
 def _footnote(data_date: str | None) -> str:
     parts = [f"Note: {DATA_NOTE}.", "Token counts are heuristic estimates."]
     if data_date:
@@ -172,9 +191,8 @@ def render_monthly_trend(
     for source in _sorted_sources(set(by_source)):
         slots = by_source[source]
         color = style.SOURCE_COLORS.get(source, style.NEUTRAL_COLOR)
-        xs = [i for i, slot in enumerate(slots) if slot is not None]
-        ys = [slots[i]["median_window"] for i in xs]
-        if not xs:
+        xs, ys = _line_series(slots)
+        if all(math.isnan(y) for y in ys):  # no qualifying month, no line
             continue
         ax_bottom.plot(xs, ys, color=color, marker="o", linewidth=1.5,
                        label=source)
