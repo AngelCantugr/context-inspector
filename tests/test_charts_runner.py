@@ -4,11 +4,23 @@ The three query-driven figures render from small static JSON fixtures under
 ``tests/fixtures/query_outputs/`` — those files were generated once by
 running the real L1 queries (``category_shares``, ``tool_ranking``,
 ``monthly_trend``, ``monthly_trend_by_source``) over
-``tests/fixtures/sweep_results.jsonl`` via ``analytics.runner.run_queries``
-and checking in the resulting ``<name>.json`` verbatim, so the golden tests
-stay hermetic (no duckdb needed) while exercising the exact query-output
-shape the runner sees in production. ``window_growth`` renders from the
-checked-in ``examples/sample_transcript.json``.
+``tests/fixtures/sweep_results_charts.jsonl`` via ``analytics.runner.
+run_queries`` and checking in the resulting ``<name>.json`` verbatim, so
+the golden tests stay hermetic (no duckdb needed) while exercising the
+exact query-output shape the runner sees in production. The charts fixture
+is purpose-built (not the L1 fixture): its Codex rows carry harness-context
+and developer categories plus a js_repl outlier (few calls, huge tokens),
+and only ``/YYYY/MM/DD``-dated Codex paths produce a ``session_date``, so
+the monthly panels are deterministic. Regenerate with::
+
+    uv run python -m context_inspector query \\
+        tests/fixtures/sweep_results_charts.jsonl \\
+        --query category_shares --query tool_ranking \\
+        --query monthly_trend --query monthly_trend_by_source \\
+        --out tests/fixtures/query_outputs
+
+``window_growth`` renders from the checked-in
+``examples/sample_transcript.json``.
 """
 
 from __future__ import annotations
@@ -37,7 +49,7 @@ duckdb_available = importlib.util.find_spec("duckdb") is not None
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_QUERIES = Path(__file__).parent / "fixtures" / "query_outputs"
 SAMPLE_TRANSCRIPT = REPO_ROOT / "examples" / "sample_transcript.json"
-FIXTURE_SWEEP = Path(__file__).parent / "fixtures" / "sweep_results.jsonl"
+FIXTURE_SWEEP = Path(__file__).parent / "fixtures" / "sweep_results_charts.jsonl"
 
 QUERY_FIGURES = ("category_composition", "tool_ranking", "monthly_trend")
 ALL_FIGURES = list(FIGURE_NAMES)
@@ -78,6 +90,33 @@ class GoldenRenderTest(unittest.TestCase):
             for figure in ALL_FIGURES:
                 sidecar = json.loads((out / f"{figure}.json").read_text())
                 self.assertEqual(sidecar["data_date"], "2026-09")
+
+    def test_codex_bar_includes_harness_context_segment(self):
+        # The charts fixture's Codex rows carry harness-context tokens, so
+        # the acceptance criterion (a visible harness-context segment) is
+        # reproducible in-repo.
+        with tempfile.TemporaryDirectory() as tmp:
+            out, _ = self._render(tmp)
+            sidecar = json.loads(
+                (out / "category_composition.json").read_text()
+            )
+            codex = next(s for s in sidecar["sources"]
+                         if s["source"] == "codex")
+            by_cat = {c["category"]: c for c in codex["categories"]}
+            self.assertGreater(by_cat["harness context"]["tokens"], 0)
+            self.assertGreater(by_cat["harness context"]["share"], 0.0)
+            self.assertGreater(by_cat["developer"]["tokens"], 0)
+
+    def test_tool_ranking_fixture_has_js_repl_outlier(self):
+        # js_repl: few calls, huge tokens — extreme tokens_per_call next to
+        # the high-volume shell workhorse.
+        rows = json.loads(
+            (FIXTURE_QUERIES / "tool_ranking.json").read_text()
+        )
+        js_repl = next(r for r in rows if r["source"] == "all"
+                       and r["tool"] == "js_repl")
+        self.assertLessEqual(js_repl["calls"], 4)
+        self.assertGreaterEqual(js_repl["tokens_per_call"], 300)
 
     def test_regeneration_is_byte_identical(self):
         """Two fresh renders into separate dirs: all four PNGs sha256-equal."""
