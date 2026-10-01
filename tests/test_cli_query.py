@@ -24,7 +24,7 @@ class QueryCliTest(unittest.TestCase):
             self.assertEqual(rc, 0)
             out = Path(tmp)
             names = [p.stem for p in out.glob("*.md")]
-            self.assertEqual(len(names), 10)
+            self.assertEqual(len(names), 11)
             data = json.loads((out / "duplicate_burden.json").read_text())
             total = next(r for r in data if r["source"] == "all")
             self.assertEqual(total["wasted_tokens"], 1500)

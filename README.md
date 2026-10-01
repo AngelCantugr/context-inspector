@@ -75,6 +75,38 @@ Outputs land in `reports/queries/<name>.md` (human) and `<name>.json`
 (machine). The queries themselves — one documented `.sql` file each — live in
 `context_inspector/analytics/queries/`.
 
+### Figures
+
+The `charts` subcommand renders the L2 figure pack — four matplotlib figures
+over the query pack (requires the `[analytics]` extra, which adds duckdb +
+matplotlib):
+
+```bash
+# regenerate everything from a sweep (SQL stays the source of truth)
+python -m context_inspector charts --sweep sweep_results.jsonl \
+    --session ~/.codex/sessions/<date>/rollout-*.jsonl
+
+# or render from existing query output (after `query` wrote reports/queries/)
+# — renders the three query-driven figures and skips window_growth
+# (it plots a single session and needs --session) with a note on stderr
+python -m context_inspector charts
+
+# render a subset
+python -m context_inspector charts --figure tool_ranking --figure monthly_trend
+```
+
+Outputs land in `reports/figures/<name>.png` plus a sidecar `<name>.json`
+holding the exact data rendered, so every figure is auditable and
+regenerates bit-for-bit. `window_growth` plots a single session and requires
+`--session`; the other three read query output, re-running the L1 queries
+into a temp dir when `--sweep` is given.
+
+## Tests
+
+```bash
+uv run python -m unittest discover tests
+```
+
 ## What it measures
 
 - **Per-message tokens** with cumulative window growth

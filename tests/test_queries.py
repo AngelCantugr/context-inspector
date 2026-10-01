@@ -30,14 +30,26 @@ class QueryTest(unittest.TestCase):
         self.assertEqual(list(columns), entry.columns)
         return rows
 
-    def test_manifest_covers_all_ten_queries(self):
+    def test_manifest_covers_all_queries(self):
         expected = {
-            "monthly_trend", "window_percentiles", "category_shares",
+            "monthly_trend", "monthly_trend_by_source", "window_percentiles",
+            "category_shares",
             "tool_ranking", "whale_table", "duplicate_burden",
             "tool_share_trend", "signal_frequency", "category_outliers",
             "bloat_signals_by_tool",
         }
         self.assertEqual(set(self.manifest), expected)
+
+    def test_monthly_trend_by_source(self):
+        rows = self.query("monthly_trend_by_source")
+        codex = [r for r in rows if r[0] == "codex"]
+        # claude-code/kimi-code fixture paths are /fake/... (no date in
+        # path, no file on disk), so only path-dated codex rows land here.
+        self.assertEqual(
+            [(str(r[1]), r[2], r[3], r[4]) for r in codex],
+            [("2026-08-01", 2, 1500, 750.0), ("2026-09-01", 2, 2600, 1300.0)],
+        )
+        self.assertEqual({r[0] for r in rows}, {"codex"})
 
     def test_monthly_trend(self):
         rows = self.query("monthly_trend")

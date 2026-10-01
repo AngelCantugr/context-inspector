@@ -1,0 +1,106 @@
+[
+  {
+    "source": "all",
+    "tool": "Bash",
+    "tokens": 2650,
+    "share": 0.5408163265306123,
+    "calls": 14,
+    "tokens_per_call": 189.28571428571428
+  },
+  {
+    "source": "all",
+    "tool": "js_repl",
+    "tokens": 1230,
+    "share": 0.2510204081632653,
+    "calls": 4,
+    "tokens_per_call": 307.5
+  },
+  {
+    "source": "all",
+    "tool": "Read",
+    "tokens": 400,
+    "share": 0.08163265306122448,
+    "calls": 2,
+    "tokens_per_call": 200.0
+  },
+  {
+    "source": "all",
+    "tool": "exec",
+    "tokens": 270,
+    "share": 0.05510204081632653,
+    "calls": 7,
+    "tokens_per_call": 38.57142857142857
+  },
+  {
+    "source": "all",
+    "tool": "Edit",
+    "tokens": 200,
+    "share": 0.04081632653061224,
+    "calls": 2,
+    "tokens_per_call": 100.0
+  },
+  {
+    "source": "all",
+    "tool": "apply_patch",
+    "tokens": 150,
+    "share": 0.030612244897959183,
+    "calls": 2,
+    "tokens_per_call": 75.0
+  },
+  {
+    "source": "claude-code",
+    "tool": "Bash",
+    "tokens": 2200,
+    "share": 0.7857142857142857,
+    "calls": 11,
+    "tokens_per_call": 200.0
+  },
+  {
+    "source": "claude-code",
+    "tool": "Read",
+    "tokens": 400,
+    "share": 0.14285714285714285,
+    "calls": 2,
+    "tokens_per_call": 200.0
+  },
+  {
+    "source": "claude-code",
+    "tool": "Edit",
+    "tokens": 200,
+    "share": 0.07142857142857142,
+    "calls": 2,
+    "tokens_per_call": 100.0
+  },
+  {
+    "source": "codex",
+    "tool": "js_repl",
+    "tokens": 1230,
+    "share": 0.7454545454545455,
+    "calls": 4,
+    "tokens_per_call": 307.5
+  },
+  {
+    "source": "codex",
+    "tool": "exec",
+    "tokens": 270,
+    "share": 0.16363636363636364,
+    "calls": 7,
+    "tokens_per_call": 38.57142857142857
+  },
+  {
+    "source": "codex",
+    "tool": "apply_patch",
+    "tokens": 150,
+    "share": 0.09090909090909091,
+    "calls": 2,
+    "tokens_per_call": 75.0
+  },
+  {
+    "source": "kimi-code",
+    "tool": "Bash",
+    "tokens": 450,
+    "share": 1.0,
+    "calls": 3,
+    "tokens_per_call": 150.0
+  }
+]

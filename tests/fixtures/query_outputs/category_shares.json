@@ -1,0 +1,116 @@
+[
+  {
+    "source": "all",
+    "category": "tool result",
+    "tokens": 4900,
+    "share": 0.3475177304964539
+  },
+  {
+    "source": "all",
+    "category": "user",
+    "tokens": 3350,
+    "share": 0.2375886524822695
+  },
+  {
+    "source": "all",
+    "category": "assistant",
+    "tokens": 2850,
+    "share": 0.20212765957446807
+  },
+  {
+    "source": "all",
+    "category": "system",
+    "tokens": 1800,
+    "share": 0.1276595744680851
+  },
+  {
+    "source": "all",
+    "category": "harness context",
+    "tokens": 900,
+    "share": 0.06382978723404255
+  },
+  {
+    "source": "all",
+    "category": "developer",
+    "tokens": 300,
+    "share": 0.02127659574468085
+  },
+  {
+    "source": "claude-code",
+    "category": "tool result",
+    "tokens": 2800,
+    "share": 0.39436619718309857
+  },
+  {
+    "source": "claude-code",
+    "category": "user",
+    "tokens": 1600,
+    "share": 0.22535211267605634
+  },
+  {
+    "source": "claude-code",
+    "category": "assistant",
+    "tokens": 1400,
+    "share": 0.19718309859154928
+  },
+  {
+    "source": "claude-code",
+    "category": "system",
+    "tokens": 1300,
+    "share": 0.18309859154929578
+  },
+  {
+    "source": "codex",
+    "category": "tool result",
+    "tokens": 1650,
+    "share": 0.28448275862068967
+  },
+  {
+    "source": "codex",
+    "category": "user",
+    "tokens": 1300,
+    "share": 0.22413793103448276
+  },
+  {
+    "source": "codex",
+    "category": "assistant",
+    "tokens": 1150,
+    "share": 0.19827586206896552
+  },
+  {
+    "source": "codex",
+    "category": "harness context",
+    "tokens": 900,
+    "share": 0.15517241379310345
+  },
+  {
+    "source": "codex",
+    "category": "system",
+    "tokens": 500,
+    "share": 0.08620689655172414
+  },
+  {
+    "source": "codex",
+    "category": "developer",
+    "tokens": 300,
+    "share": 0.05172413793103448
+  },
+  {
+    "source": "kimi-code",
+    "category": "tool result",
+    "tokens": 450,
+    "share": 0.375
+  },
+  {
+    "source": "kimi-code",
+    "category": "user",
+    "tokens": 450,
+    "share": 0.375
+  },
+  {
+    "source": "kimi-code",
+    "category": "assistant",
+    "tokens": 300,
+    "share": 0.25
+  }
+]

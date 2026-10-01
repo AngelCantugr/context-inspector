@@ -21,7 +21,7 @@ Repository = "https://github.com/AngelCantugr/context-inspector"
 
 [project.optional-dependencies]
 tiktoken = ["tiktoken>=0.5"]
-analytics = ["duckdb>=1.0"]
+analytics = ["duckdb>=1.0", "matplotlib>=3.8"]
 
 [project.scripts]
 context-inspector = "context_inspector.cli:main"

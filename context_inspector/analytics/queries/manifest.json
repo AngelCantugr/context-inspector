@@ -8,6 +8,13 @@
       "params": []
     },
     {
+      "name": "monthly_trend_by_source",
+      "file": "monthly_trend_by_source.sql",
+      "description": "Sessions, total tokens, median non-empty window per source per calendar month.",
+      "columns": ["source", "month", "sessions", "total_tokens", "median_window"],
+      "params": []
+    },
+    {
       "name": "window_percentiles",
       "file": "window_percentiles.sql",
       "description": "p50/p90/p99 of total_tokens per source.",
