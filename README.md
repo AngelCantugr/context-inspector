@@ -12,13 +12,23 @@ for the actionable rules distilled from analyzing 1,100+ real sessions).
 
 ## Install
 
-Zero required dependencies (Python ≥ 3.10, stdlib only):
+Zero required dependencies (Python ≥ 3.10, stdlib only), packaged with
+hatchling and managed by [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/AngelCantugr/context-inspector.git
 cd context-inspector
-pip install .            # or: pip install ".[tiktoken]" for real token counts
+uv tool install .            # or: uv tool install ".[tiktoken]" for real token counts
 # PyPI release coming soon
+```
+
+From a clone, `uv sync` sets up the dev environment (dev deps: duckdb +
+matplotlib for the test suite):
+
+```bash
+uv sync                          # base + dev group
+uv sync --extra analytics        # + duckdb/matplotlib as project extras
+uv sync --extra analytics --extra agent   # + langgraph/anthropic for the weekly memo agent
 ```
 
 ## Usage
@@ -27,30 +37,30 @@ pip install .            # or: pip install ".[tiktoken]" for real token counts
 # after install, the CLI is on your PATH:
 context-inspector analyze examples/sample_transcript.json
 
-# or run from a clone without installing:
+# or run from a clone without installing (uv execs the project venv):
 
 # plain OpenAI-format message array
-python -m context_inspector analyze examples/sample_transcript.json
-python -m context_inspector analyze your_transcript.json --json
+uv run context-inspector analyze examples/sample_transcript.json
+uv run context-inspector analyze your_transcript.json --json
 
 # real agent sessions — format auto-detected from the path
-python -m context_inspector analyze ~/.claude/projects/<project>/<session>.jsonl
-python -m context_inspector analyze ~/.codex/sessions/<date>/rollout-*.jsonl
-python -m context_inspector analyze <kimi-code home>/sessions/<ws>/<conv>/agents/main/wire.jsonl
+uv run context-inspector analyze ~/.claude/projects/<project>/<session>.jsonl
+uv run context-inspector analyze ~/.codex/sessions/<date>/rollout-*.jsonl
+uv run context-inspector analyze <kimi-code home>/sessions/<ws>/<conv>/agents/main/wire.jsonl
 
 # or force a format
-python -m context_inspector analyze <log> --from claude-code   # codex | kimi-code
+uv run context-inspector analyze <log> --from claude-code   # codex | kimi-code
 
 # sweep: analyze EVERY local session across all harnesses and aggregate
-python -m context_inspector sweep
-python -m context_inspector sweep --save reports/sweep.md
+uv run context-inspector sweep
+uv run context-inspector sweep --save reports/sweep.md
 
-# real token counts (requires: pip install tiktoken)
-python -m context_inspector analyze <log> --tokenizer tiktoken
-python -m context_inspector sweep --tokenizer tiktoken --save reports/sweep-tiktoken.md
+# real token counts (requires: uv tool install ".[tiktoken]")
+uv run context-inspector analyze <log> --tokenizer tiktoken
+uv run context-inspector sweep --tokenizer tiktoken --save reports/sweep-tiktoken.md
 
-# dev utility for resumable batch sweeps (run from a clone; not installed by pip)
-python sweep_runner.py
+# dev utility for resumable batch sweeps (run from a clone; not installed by uv tool)
+uv run python sweep_runner.py
 ```
 
 Supported session logs: **Claude Code** (`~/.claude/projects/**`), **Codex CLI**
@@ -66,9 +76,9 @@ The `query` subcommand runs a canonical pack of ten SQL queries over
 markdown + JSON tables per query:
 
 ```bash
-pip install ".[analytics]"     # adds duckdb; base CLI stays stdlib-only
-python -m context_inspector query sweep_results.jsonl
-python -m context_inspector query sweep_results.jsonl --query tool_ranking --out reports/queries
+uv sync --extra analytics      # adds duckdb; base CLI stays stdlib-only
+uv run context-inspector query sweep_results.jsonl
+uv run context-inspector query sweep_results.jsonl --query tool_ranking --out reports/queries
 ```
 
 Outputs land in `reports/queries/<name>.md` (human) and `<name>.json`
@@ -83,16 +93,16 @@ matplotlib):
 
 ```bash
 # regenerate everything from a sweep (SQL stays the source of truth)
-python -m context_inspector charts --sweep sweep_results.jsonl \
+uv run context-inspector charts --sweep sweep_results.jsonl \
     --session ~/.codex/sessions/<date>/rollout-*.jsonl
 
 # or render from existing query output (after `query` wrote reports/queries/)
 # — renders the three query-driven figures and skips window_growth
 # (it plots a single session and needs --session) with a note on stderr
-python -m context_inspector charts
+uv run context-inspector charts
 
 # render a subset
-python -m context_inspector charts --figure tool_ranking --figure monthly_trend
+uv run context-inspector charts --figure tool_ranking --figure monthly_trend
 ```
 
 Outputs land in `reports/figures/<name>.png` plus a sidecar `<name>.json`
@@ -104,6 +114,7 @@ into a temp dir when `--sweep` is given.
 ## Tests
 
 ```bash
+uv sync    # installs the dev group (duckdb + matplotlib) into the project venv
 uv run python -m unittest discover tests
 ```
 
