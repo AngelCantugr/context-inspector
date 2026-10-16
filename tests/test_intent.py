@@ -61,8 +61,56 @@ class ClassifyTest(unittest.TestCase):
                 self.assertEqual(classify("Bash", args), intent)
 
     def test_shell_family_aliases_all_parse_commands(self):
-        for name in ("exec", "exec_command", "shell_command", "bash", "shell"):
+        for name in ("exec_command", "shell_command", "bash", "shell"):
             self.assertEqual(classify(name, '{"command": "ls -la"}'), "explore")
+
+    def test_exec_is_repl_not_shell(self):
+        # codex's exec is a JS REPL — arguments are raw code, never parsed
+        self.assertEqual(
+            classify("exec", '{"arguments": "const names=ALL_TOOLS.filter(t=>t)"}'),
+            "repl",
+        )
+        self.assertEqual(classify("exec", '{"arguments": "console.log(1)"}'), "repl")
+
+    def test_exec_command_still_shell_parses(self):
+        self.assertEqual(classify("exec_command", '{"cmd": "ls"}'), "explore")
+
+    def test_new_command_heads_from_corpus(self):
+        for head, intent in [
+            ("cd", "explore"), ("pwd", "explore"), ("env", "explore"),
+            ("which", "explore"), ("whoami", "explore"), ("uname", "explore"),
+            ("date", "explore"), ("curl", "explore"), ("awk", "explore"),
+            ("basename", "explore"),
+            ("rm", "mutate"), ("mkdir", "mutate"), ("cp", "mutate"),
+            ("mv", "mutate"), ("touch", "mutate"), ("chmod", "mutate"),
+            ("export", "meta"), ("unset", "meta"), ("set", "meta"),
+            ("source", "meta"), ("alias", "meta"),
+            ("uv", "test-build"), ("pip", "test-build"), ("brew", "test-build"),
+            ("swift", "test-build"), ("ruff", "test-build"),
+            ("eslint", "test-build"), ("prettier", "test-build"),
+        ]:
+            with self.subTest(head=head):
+                args = json.dumps({"command": f"{head} something"})
+                self.assertEqual(classify("Bash", args), intent)
+
+    def test_ticktick_prefix(self):
+        full = "mcp__plugin-learning-depot_ticktick__list_projects"
+        self.assertEqual(classify(full, ""), "explore")
+        # hash-suffixed truncated variant
+        self.assertEqual(
+            classify("mcp__plugin-learning-depot_ticktick__ab12cd", ""), "explore"
+        )
+
+    def test_context7_prefix(self):
+        self.assertEqual(
+            classify("mcp__codex_apps__context7_resolve_library_id", ""), "explore"
+        )
+        self.assertEqual(
+            classify("mcp__codex_apps__context7_query_docs", ""), "explore"
+        )
+
+    def test_fetchurl(self):
+        self.assertEqual(classify("FetchURL", ""), "explore")
 
     def test_flags_and_absolute_paths(self):
         self.assertEqual(
