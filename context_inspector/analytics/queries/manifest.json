@@ -38,7 +38,7 @@
     {
       "name": "intent_shares",
       "file": "intent_shares.sql",
-      "description": "Per intent — total tokens, share of tool-result tokens, call count, tokens/call — overall (source='all') and per source.",
+      "description": "Per intent — total tokens, share of classified tool-result tokens, call count, tokens/call — overall (source='all') and per source.",
       "columns": ["source", "intent", "tokens", "share", "calls", "tokens_per_call"],
       "params": []
     },

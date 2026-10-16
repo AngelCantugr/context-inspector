@@ -952,3 +952,26 @@ Accept: shell-family `other` ≤ ~40%; the largest 2026-04-28 session shows ~99%
 - **charts / weekly**: read `tool_tokens` only; new fields flow through harmlessly. No changes needed.
 - **No version bump**: gh#12 doesn't ask for a release; version bumps happen at release time per repo convention.
 - If a Task 2–6 step finds an existing test asserting a count this plan didn't anticipate (e.g. sessions row count), update that expectation only if the plan's fixture edits justify it — never weaken an assertion to make it pass.
+
+---
+
+## Acceptance results (2026-10-16 run, 808 sessions, classifier v2)
+
+Executed against the author's real claude-code / codex / kimi-code session data
+(808 sessions, 0 error stubs; corpus output not committed):
+
+- Shell-family `other`: **9.2%** (target ≤ ~40%). First pass measured 74.6%;
+  root causes were codex `exec` being a JS REPL (5.04M tokens, now `repl`),
+  unmapped `cd` (3.2M, now `explore`), and a long tail of unmapped heads
+  (commit `14c36bf` added 62 heads + ticktick/context7 MCP prefixes).
+- Whale criterion: the 2026-04-28 js_repl whale session is **absent from the
+  current corpus** (zero js_repl sessions; likely an older/rotated snapshot).
+  Substitute evidence: the largest repl-bearing session
+  (codex, 2026-10-13, ~1.4M tokens) classifies **97.4% `repl`** — the
+  regression-case role the whale played is filled by codex `exec`.
+- `intent_shares` overall (v2): explore 71.7%, repl 11.0%, other 7.6%,
+  delegate 4.1%, vcs 3.2%, mutate 1.3%, meta 1.0%, test-build 0.2%.
+- Full suite: 170 tests OK. Deferred by design: compound-command splitting,
+  env-prefix stripping, flag inspection, `python3` mapping, and the
+  `charts.tool_ranking.SHELL_FAMILY` divergence for `exec` (documented in
+  `intent.py`).
