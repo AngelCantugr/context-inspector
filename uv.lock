@@ -230,6 +230,7 @@ source = { editable = "." }
 [package.optional-dependencies]
 agent = [
     { name = "anthropic" },
+    { name = "duckdb" },
     { name = "langgraph" },
 ]
 analytics = [
@@ -251,6 +252,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", marker = "extra == 'agent'", specifier = ">=0.40" },
+    { name = "duckdb", marker = "extra == 'agent'", specifier = ">=1.0" },
     { name = "duckdb", marker = "extra == 'analytics'", specifier = ">=1.0" },
     { name = "langgraph", marker = "extra == 'agent'", specifier = ">=0.2" },
     { name = "matplotlib", marker = "extra == 'analytics'", specifier = ">=3.8" },
