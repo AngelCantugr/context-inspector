@@ -631,5 +631,53 @@ class MemoEvidenceAppendixTest(unittest.TestCase):
         )
 
 
+class DryRunTest(unittest.TestCase):
+    """CLI #17: --dry-run composes the memo but never touches the vault."""
+
+    def _script(self, tmp: str) -> list:
+        transcript = _write_transcript(tmp)
+        return transcript, [
+            _tool_use_response("analyze_session", {"path": transcript}),
+            _text_response(FINDING),
+            _text_response(INTERPRET),
+        ]
+
+    def test_dry_run_composes_memo_without_filing(self):
+        from context_inspector.agent import AgentConfig, run_interpretation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            transcript, script = self._script(tmp)
+            notes_dir = Path(tmp) / "notes"
+            memo = run_interpretation(
+                _manifest([_outlier(transcript)]),
+                AgentConfig(
+                    notes_dir=notes_dir,
+                    dry_run=True,
+                    client=FakeClient(script),
+                    backoff_seconds=0,
+                ),
+            )
+            self.assertEqual(memo.week_id, "2026-W42")
+            self.assertEqual(len(memo.findings), 1)
+            self.assertEqual(memo.filed_path, "")
+            self.assertFalse(notes_dir.exists(), "dry-run must not create the vault")
+
+    def test_dry_run_does_not_require_notes_dir(self):
+        from context_inspector.agent import AgentConfig, run_interpretation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            transcript, script = self._script(tmp)
+            memo = run_interpretation(
+                _manifest([_outlier(transcript)]),
+                AgentConfig(
+                    notes_dir=None,
+                    dry_run=True,
+                    client=FakeClient(script),
+                    backoff_seconds=0,
+                ),
+            )
+            self.assertEqual(len(memo.findings), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,10 @@
-"""CLI entry point: python -m context_inspector {analyze,sweep,query,charts} ..."""
+"""CLI entry point: python -m context_inspector {analyze,sweep,query,charts,weekly} ..."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -102,8 +103,19 @@ def main(argv: list[str] | None = None) -> int:
         help="render only this figure (repeatable; default: all four)",
     )
 
+    p_weekly = sub.add_parser(
+        "weekly", help="run the weekly context-hygiene memo pipeline "
+        "(requires the [agent] extra)"
+    )
+    p_weekly.add_argument(
+        "--dry-run", action="store_true",
+        help="print the memo to stdout instead of filing it in the vault",
+    )
+
     args = parser.parse_args(argv)
 
+    if args.command == "weekly":
+        return _run_weekly(args)
     if args.command == "query":
         return _run_query(args)
     if args.command == "charts":
@@ -224,6 +236,56 @@ def _run_charts(args: argparse.Namespace) -> int:
         return 1
     for figure, png in rendered:
         print(f"{figure}: {png}")
+    return 0
+
+
+VAULT_ENV_VAR = "CONTEXT_INSPECTOR_VAULT"
+
+
+def _run_weekly(args: argparse.Namespace) -> int:
+    # Preflight before any sweep, agent-extra import, or API call.
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("error: ANTHROPIC_API_KEY is not set", file=sys.stderr)
+        return 1
+    vault = os.environ.get(VAULT_ENV_VAR)
+    if not vault and not args.dry_run:
+        print(
+            f"error: {VAULT_ENV_VAR} is not set — point it at your vault "
+            "(memos are filed under its reports/ folder), or pass --dry-run",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        from . import agent, weekly
+    except ImportError:
+        print(
+            "error: the agent dependencies are not installed. Install them "
+            'with `uv sync --extra agent` (or `pip install "context-inspector[agent]"`).',
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        manifest = weekly.run_weekly()
+        memo = agent.run_interpretation(
+            manifest,
+            agent.AgentConfig(
+                notes_dir=Path(vault) / "reports" if vault else None,
+                dry_run=args.dry_run,
+            ),
+        )
+    except weekly.WeeklyError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    except agent.AgentError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    if args.dry_run:
+        print(agent.render_markdown(memo))
+    else:
+        print(f"filed: {memo.filed_path}")
     return 0
 
 
