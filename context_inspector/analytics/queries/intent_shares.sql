@@ -2,9 +2,10 @@
 -- description: Per intent — total tokens, share of tool-result tokens, call
 --   count, tokens/call — overall (source='all') and per source.
 -- caveats: tokens/call is NULL when intent_counts was absent (older sweeps) —
---   same mixing caveat as tool_ranking. Shares are of all tool-result tokens
---   within the same source scope. Sessions swept before the classifier
---   contribute no intent rows at all.
+--   same mixing caveat as tool_ranking. Shares are of classified intent
+--   tokens within the source scope; they sum to 1 only when every tool-result
+--   token classified (true for post-classifier sweeps). Sessions swept before
+--   the classifier contribute no intent rows at all.
 WITH scoped AS (
     SELECT i.source, i.intent, sum(i.tokens) AS tokens, sum(i.calls) AS calls
     FROM intents i JOIN sessions s USING (path)

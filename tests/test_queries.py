@@ -107,6 +107,9 @@ class QueryTest(unittest.TestCase):
         self.assertAlmostEqual(sep["explore"][3], 680 / 1080, places=4)
         self.assertAlmostEqual(sep["mutate"][3], 200 / 1080, places=4)
         self.assertAlmostEqual(sep["test-build"][3], 200 / 1080, places=4)
+        # s1.jsonl (claude-code) has vcs/other intents but a fake path with no
+        # derivable date and no on-disk file — it must not appear in any month.
+        self.assertNotIn("vcs", {r[1] for r in rows})
 
     def test_whale_table(self):
         rows = self.query("whale_table")
