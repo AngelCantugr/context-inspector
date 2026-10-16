@@ -68,8 +68,9 @@ MCP_PREFIX_INTENT = (
 #: ``exec`` is a JS code interpreter, so its raw-JS arguments land here.
 REPL_TOOLS = frozenset({"js_repl", "exec"})
 
-#: Shell-execution tool names across harnesses — same conceptual tool as
-#: charts.tool_ranking.SHELL_FAMILY; intent comes from the command head.
+#: Shell-execution tool names across harnesses — overlaps
+#: charts.tool_ranking.SHELL_FAMILY, except ``exec`` (classified repl there
+#: is a known divergence); intent comes from the command head.
 SHELL_TOOLS = frozenset(
     {"Bash", "bash", "exec_command", "shell_command", "shell"}
 )
