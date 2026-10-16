@@ -41,6 +41,8 @@ def main() -> None:
                     "signals": r.signals,
                     "tool_tokens": r.tool_tokens,
                     "tool_counts": r.tool_counts,
+                    "intent_tokens": r.intent_tokens,
+                    "intent_counts": r.intent_counts,
                 }
             except Exception as exc:
                 rec = {"source": source, "path": path, "error": str(exc)[:200]}
