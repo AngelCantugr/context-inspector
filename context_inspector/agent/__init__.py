@@ -19,7 +19,7 @@ def __getattr__(name: str):
         from . import graph
 
         return getattr(graph, name)
-    if name in ("Finding", "Memo"):
+    if name in ("Finding", "Memo", "render_markdown"):
         from . import memo
 
         return getattr(memo, name)
@@ -40,5 +40,6 @@ __all__ = [
     "ToolContext",
     "ToolReturn",
     "execute_tool",
+    "render_markdown",
     "run_interpretation",
 ]

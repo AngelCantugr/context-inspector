@@ -65,6 +65,7 @@ class AgentConfig:
     """
 
     notes_dir: Path | None = None  # vault reports folder for filing
+    dry_run: bool = False  # compose the memo but never file it
     model: str = DEFAULT_MODEL
     client: MessagesAPI | None = None
     max_iterations: int = 24  # total LLM calls across the whole graph
@@ -424,7 +425,10 @@ def build_graph() -> Any:
     graph.add_conditional_edges("deep_dive", _more_outliers)
     graph.add_conditional_edges("gate_findings", _after_gate)
     graph.add_edge("interpret", "compose_memo")
-    graph.add_edge("compose_memo", "file_note")
+    graph.add_conditional_edges(
+        "compose_memo",
+        lambda s: END if s["config"].dry_run else "file_note",
+    )
     graph.add_edge("file_note", END)
     return graph.compile()
 
@@ -454,11 +458,12 @@ def run_interpretation(
 
     Returns the filed Memo. ``AgentStageError`` means the week must be
     skipped (no memo is filed); ``AgentPreflightError`` means the run was
-    never safe to start.
+    never safe to start. With ``config.dry_run`` the graph stops after
+    compose_memo (``file_note`` never runs) and no notes_dir is required.
     """
 
     config = config or AgentConfig()
-    if config.notes_dir is None:
+    if config.notes_dir is None and not config.dry_run:
         raise AgentPreflightError("notes_dir (vault reports folder) is not configured")
     client = config.client if config.client is not None else _build_client(config)
     state = AgentState(manifest=manifest, config=config, client=client)
