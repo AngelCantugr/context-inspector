@@ -1,0 +1,10 @@
+[
+  {"role": "assistant", "content": "", "tool_calls": [
+    {"id": "c1", "type": "function", "function": {"name": "Bash", "arguments": "{\"command\": \"cat a.py\"}"}},
+    {"id": "c2", "type": "function", "function": {"name": "Bash", "arguments": "{\"command\": \"pytest tests/\"}"}},
+    {"id": "c3", "type": "function", "function": {"name": "js_repl", "arguments": "{\"code\": \"2+2\"}"}}
+  ]},
+  {"role": "tool", "tool_call_id": "c1", "content": "x"},
+  {"role": "tool", "tool_call_id": "c2", "content": "yy"},
+  {"role": "tool", "tool_call_id": "c3", "content": "zzzz"}
+]

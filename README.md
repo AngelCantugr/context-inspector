@@ -71,7 +71,7 @@ Claude Code subagent sidechains are skipped).
 
 ## Analytics (optional, DuckDB)
 
-The `query` subcommand runs a canonical pack of ten SQL queries over
+The `query` subcommand runs a canonical pack of thirteen SQL queries over
 `sweep_results.jsonl` (produced by `python sweep_runner.py`) and writes
 markdown + JSON tables per query:
 
@@ -83,7 +83,9 @@ uv run context-inspector query sweep_results.jsonl --query tool_ranking --out re
 
 Outputs land in `reports/queries/<name>.md` (human) and `<name>.json`
 (machine). The queries themselves — one documented `.sql` file each — live in
-`context_inspector/analytics/queries/`.
+`context_inspector/analytics/queries/`. Among them:
+
+- `intent_shares` / `intent_trend` — rule-based tool-intent split (explore / test-build / vcs / repl / other) of tool-result tokens, overall and per month — the queries that power the Serena before/after comparison.
 
 ### Figures
 

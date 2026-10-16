@@ -34,7 +34,8 @@ class QueryTest(unittest.TestCase):
         expected = {
             "monthly_trend", "monthly_trend_by_source", "window_percentiles",
             "category_shares",
-            "tool_ranking", "whale_table", "duplicate_burden",
+            "tool_ranking", "intent_shares", "intent_trend",
+            "whale_table", "duplicate_burden",
             "tool_share_trend", "signal_frequency", "category_outliers",
             "bloat_signals_by_tool",
         }
@@ -78,6 +79,37 @@ class QueryTest(unittest.TestCase):
         self.assertEqual(rows["exec"][2:6], (1680, 1680 / 4030, 8, 210.0))
         self.assertEqual(rows["Bash"][2:6], (1750, 1750 / 4030, 9, 1750 / 9))
         self.assertEqual(rows["apply_patch"][2:6], (200, 200 / 4030, 2, 100.0))
+
+    def test_intent_shares_overall(self):
+        rows = {r[1]: r for r in self.query("intent_shares") if r[0] == "all"}
+        self.assertEqual(rows["explore"][2:6], (2180, 2180 / 4030, 11, 2180 / 11))
+        self.assertEqual(rows["test-build"][2:6], (800, 800 / 4030, 4, 200.0))
+        self.assertEqual(rows["mutate"][2:6], (200, 200 / 4030, 2, 100.0))
+        self.assertEqual(rows["vcs"][2:6], (400, 400 / 4030, 2, 200.0))
+        self.assertEqual(rows["other"][2:6], (450, 450 / 4030, 2, 225.0))
+
+    def test_intent_shares_per_source(self):
+        rows = {(r[0], r[1]): r for r in self.query("intent_shares")}
+        self.assertEqual(rows[("claude-code", "explore")][2:4], (1000, 1000 / 1700))
+        self.assertEqual(rows[("kimi-code", "test-build")][2:4], (300, 300 / 450))
+        self.assertNotIn(("kimi-code", "explore"), rows)
+
+    def test_intent_trend(self):
+        rows = self.query("intent_trend")
+        aug = {r[1]: r for r in rows if str(r[0]) == "2026-08-01"}
+        sep = {r[1]: r for r in rows if str(r[0]) == "2026-09-01"}
+        # 2026-08: only rollout-a1 (path-dated) — 500 explore + 300 test-build
+        self.assertEqual(aug["explore"][2], 500)
+        self.assertAlmostEqual(aug["explore"][3], 500 / 800, places=4)
+        self.assertAlmostEqual(aug["test-build"][3], 300 / 800, places=4)
+        # 2026-09: rollout-a3 (200/200/200) + rollout-a4 (480 explore) = 1080
+        self.assertEqual(sep["explore"][2], 680)
+        self.assertAlmostEqual(sep["explore"][3], 680 / 1080, places=4)
+        self.assertAlmostEqual(sep["mutate"][3], 200 / 1080, places=4)
+        self.assertAlmostEqual(sep["test-build"][3], 200 / 1080, places=4)
+        # s1.jsonl (claude-code) has vcs/other intents but a fake path with no
+        # derivable date and no on-disk file — it must not appear in any month.
+        self.assertNotIn("vcs", {r[1] for r in rows})
 
     def test_whale_table(self):
         rows = self.query("whale_table")
