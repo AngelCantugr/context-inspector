@@ -36,6 +36,20 @@
       "params": []
     },
     {
+      "name": "intent_shares",
+      "file": "intent_shares.sql",
+      "description": "Per intent — total tokens, share of tool-result tokens, call count, tokens/call — overall (source='all') and per source.",
+      "columns": ["source", "intent", "tokens", "share", "calls", "tokens_per_call"],
+      "params": []
+    },
+    {
+      "name": "intent_trend",
+      "file": "intent_trend.sql",
+      "description": "Per-intent share of tool-result tokens per calendar month.",
+      "columns": ["month", "intent", "tokens", "share"],
+      "params": []
+    },
+    {
       "name": "whale_table",
       "file": "whale_table.sql",
       "description": "Top-N sessions by total_tokens with source, dominant category, duplicate count, wasted tokens, signals fired.",

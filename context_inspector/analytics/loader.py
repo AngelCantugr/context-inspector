@@ -9,7 +9,7 @@ and sweep_runner writes error stubs with only
 
 Invariant: ``path`` values must be unique within the file (sweep_runner
 dedupes by path). Duplicate paths would fan out the path-keyed joins in
-the ``tools`` and ``signal_labels`` views.
+the ``tools``, ``intents`` and ``signal_labels`` views.
 
 Public surface: ``load_results(path)`` returns a connection with the
 ``sessions`` table plus ``categories``, ``tools``, ``intents`` and
@@ -96,7 +96,7 @@ def load_results(path: str) -> duckdb.DuckDBPyConnection:
         raise RuntimeError(
             f"duplicate path values in {path}: {len(dupes)} path(s) appear "
             f"more than once (e.g. {sample}) — the path-keyed joins in the "
-            f"tools and signal_labels views require unique paths"
+            f"tools, intents and signal_labels views require unique paths"
         )
     con.execute(
         """

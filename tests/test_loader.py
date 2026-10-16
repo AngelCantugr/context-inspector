@@ -97,6 +97,11 @@ class LoaderTest(unittest.TestCase):
             "select path from intents where path like '%conv2%'"
         ).fetchall()
         self.assertEqual(rows, [])
+        # positive control: record 7 (conv1) does appear — test-build + other
+        rows = self.con.sql(
+            "select path from intents where path like '%conv1%'"
+        ).fetchall()
+        self.assertEqual(len(rows), 2)  # test-build + other
 
 
 class FriendlyErrorTest(unittest.TestCase):
