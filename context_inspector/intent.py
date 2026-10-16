@@ -84,7 +84,7 @@ COMMAND_INTENT = {
 
 def classify(tool_name: str, arguments: str) -> str:
     """Map a tool call to its intent bucket. Never raises."""
-    name = tool_name or ""
+    name = tool_name if isinstance(tool_name, str) else ""
     if name in TOOL_INTENT:
         return TOOL_INTENT[name]
     for prefix, intent in MCP_PREFIX_INTENT:
@@ -100,7 +100,7 @@ def classify(tool_name: str, arguments: str) -> str:
 def _classify_command(arguments: str) -> str:
     try:
         payload = json.loads(arguments)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):
         return "other"
     if not isinstance(payload, dict):
         return "other"

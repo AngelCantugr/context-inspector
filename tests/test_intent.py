@@ -87,6 +87,20 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual(classify("mystery_tool", ""), "other")
         self.assertEqual(classify("", ""), "other")
 
+    def test_non_string_inputs(self):
+        self.assertEqual(classify(123, ""), "other")
+        self.assertEqual(classify("Bash", None), "other")
+
+    def test_unterminated_quote(self):
+        self.assertEqual(
+            classify("Bash", '{"command": "cat \\"unterminated"}'), "other"
+        )
+
+    def test_comment_only_command(self):
+        self.assertEqual(
+            classify("Bash", '{"command": "# just a comment"}'), "other"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
