@@ -87,6 +87,18 @@ class LoaderTest(unittest.TestCase):
         self.assertEqual(nulls, 0)
 
 
+    def test_intents_view_unnested(self):
+        (n,) = self.con.sql("select count(*) from intents").fetchone()
+        self.assertEqual(n, 11)
+
+    def test_old_records_without_intent_fields_load(self):
+        # record 8 (kimi-code conv2) has no intent fields at all
+        rows = self.con.sql(
+            "select path from intents where path like '%conv2%'"
+        ).fetchall()
+        self.assertEqual(rows, [])
+
+
 class FriendlyErrorTest(unittest.TestCase):
     def test_loader_import_never_breaks_base_cli(self):
         # base CLI must import and run with no analytics deps touched
