@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .estimator import estimate_tokens
+from .intent import classify
 
 CATEGORIES = ("system", "user", "assistant", "tool result", "tool call args")
 
@@ -30,6 +31,8 @@ class Report:
     signals: list[str] = field(default_factory=list)
     tool_tokens: dict[str, int] = field(default_factory=dict)
     tool_counts: dict[str, int] = field(default_factory=dict)
+    intent_tokens: dict[str, int] = field(default_factory=dict)
+    intent_counts: dict[str, int] = field(default_factory=dict)
 
 
 def load_transcript(path: str | Path) -> list[dict]:
@@ -90,6 +93,9 @@ def analyze(messages: list[dict], tokenizer=None) -> Report:
     id2name: dict[str, str] = {}
     tool_tokens: dict[str, int] = {}
     tool_counts: dict[str, int] = {}
+    id2intent: dict[str, str] = {}
+    intent_tokens: dict[str, int] = {}
+    intent_counts: dict[str, int] = {}
 
     for i, msg in enumerate(messages):
         if not isinstance(msg, dict):
@@ -98,6 +104,10 @@ def analyze(messages: list[dict], tokenizer=None) -> Report:
             cid = tc.get("id") or ""
             if cid:
                 id2name[cid] = tc.get("function", {}).get("name") or "?"
+                id2intent[cid] = classify(
+                    tc.get("function", {}).get("name") or "?",
+                    tc.get("function", {}).get("arguments") or "",
+                )
         category, tokens = _message_text(msg, tokenizer)
         cumulative += tokens
         category_tokens.setdefault(category, 0)
@@ -110,6 +120,9 @@ def analyze(messages: list[dict], tokenizer=None) -> Report:
                     name = "?"
             tool_tokens[name] = tool_tokens.get(name, 0) + tokens
             tool_counts[name] = tool_counts.get(name, 0) + 1
+            intent = id2intent.get(msg.get("tool_call_id") or "") or "other"
+            intent_tokens[intent] = intent_tokens.get(intent, 0) + tokens
+            intent_counts[intent] = intent_counts.get(intent, 0) + 1
         stats.append(
             MessageStat(
                 index=i,
@@ -127,6 +140,8 @@ def analyze(messages: list[dict], tokenizer=None) -> Report:
         total_tokens=cumulative,
         tool_tokens=tool_tokens,
         tool_counts=tool_counts,
+        intent_tokens=intent_tokens,
+        intent_counts=intent_counts,
     )
     report.duplicates = _find_duplicates(messages)
     report.signals = _signals(report, stats)
@@ -220,6 +235,8 @@ def to_dict(report: Report) -> dict:
         "category_tokens": report.category_tokens,
         "tool_tokens": report.tool_tokens,
         "tool_counts": report.tool_counts,
+        "intent_tokens": report.intent_tokens,
+        "intent_counts": report.intent_counts,
         "signals": report.signals,
         "duplicates": report.duplicates,
         "messages": [
@@ -272,6 +289,18 @@ def render_text(report: Report) -> str:
             lines.append(
                 f"  {name:<19} {tok:>7,} ({share:>4.0%}) "
                 f"{calls:>4} call(s), ~{tok // max(calls, 1):,}/call"
+            )
+        lines.append("")
+    if report.intent_tokens:
+        intent_total = sum(report.intent_tokens.values()) or 1
+        lines.append("Top intents (by result tokens):")
+        for intent, tok in sorted(
+            report.intent_tokens.items(), key=lambda kv: kv[1], reverse=True
+        )[:5]:
+            share = tok / intent_total
+            lines.append(
+                f"  {intent:<19} {tok:>7,} ({share:>4.0%}) "
+                f"{report.intent_counts.get(intent, 0):>4} call(s)"
             )
         lines.append("")
     lines.append("Bloat signals:")

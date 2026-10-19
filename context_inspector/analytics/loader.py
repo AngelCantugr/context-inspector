@@ -3,16 +3,17 @@
 The JSON is typed by DuckDB itself (``read_json`` with an explicit column
 spec — no ``read_json_auto`` guessing, no Python-side expansion of nested
 dicts). Records from older sweep versions may lack ``tool_tokens`` /
-``tool_counts``, and sweep_runner writes error stubs with only
+``tool_counts`` (and, before gh#12, ``intent_tokens`` / ``intent_counts``),
+and sweep_runner writes error stubs with only
 ``source``/``path``/``error``: every missing field loads as NULL.
 
 Invariant: ``path`` values must be unique within the file (sweep_runner
 dedupes by path). Duplicate paths would fan out the path-keyed joins in
-the ``tools`` and ``signal_labels`` views.
+the ``tools``, ``intents`` and ``signal_labels`` views.
 
 Public surface: ``load_results(path)`` returns a connection with the
-``sessions`` table plus ``categories``, ``tools`` and ``signal_labels``
-views ready to query.
+``sessions`` table plus ``categories``, ``tools``, ``intents`` and
+``signal_labels`` views ready to query.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ _COLUMNS = """{
     source: 'TEXT', path: 'TEXT', total_tokens: 'BIGINT',
     category_tokens: 'MAP(VARCHAR, BIGINT)',
     tool_tokens: 'MAP(VARCHAR, BIGINT)', tool_counts: 'MAP(VARCHAR, BIGINT)',
+    intent_tokens: 'MAP(VARCHAR, BIGINT)', intent_counts: 'MAP(VARCHAR, BIGINT)',
     n_duplicates: 'INTEGER', wasted_tokens: 'BIGINT',
     signals: 'TEXT[]', error: 'TEXT'
 }"""
@@ -94,7 +96,7 @@ def load_results(path: str) -> duckdb.DuckDBPyConnection:
         raise RuntimeError(
             f"duplicate path values in {path}: {len(dupes)} path(s) appear "
             f"more than once (e.g. {sample}) — the path-keyed joins in the "
-            f"tools and signal_labels views require unique paths"
+            f"tools, intents and signal_labels views require unique paths"
         )
     con.execute(
         """
@@ -112,6 +114,17 @@ def load_results(path: str) -> duckdb.DuckDBPyConnection:
         LEFT JOIN (SELECT path, e.key AS tool, e.value AS calls
                    FROM sessions, unnest(map_entries(tool_counts)) AS u(e)) c
         USING (path, tool)
+        """
+    )
+    con.execute(
+        """
+        CREATE VIEW intents AS
+        SELECT i.path, i.source, i.intent, i.tokens, c.calls
+        FROM (SELECT path, source, e.key AS intent, e.value AS tokens
+              FROM sessions, unnest(map_entries(intent_tokens)) AS u(e)) i
+        LEFT JOIN (SELECT path, e.key AS intent, e.value AS calls
+                   FROM sessions, unnest(map_entries(intent_counts)) AS u(e)) c
+        USING (path, intent)
         """
     )
     # Canonical labels mirror sweep.SIGNAL_KEYS substring rules, so query

@@ -74,6 +74,8 @@ class SessionResult:
     signals: list[str] = field(default_factory=list)
     tool_tokens: dict[str, int] = field(default_factory=dict)
     tool_counts: dict[str, int] = field(default_factory=dict)
+    intent_tokens: dict[str, int] = field(default_factory=dict)
+    intent_counts: dict[str, int] = field(default_factory=dict)
 
 
 def _wasted(report) -> int:
@@ -95,6 +97,8 @@ def sweep_one(source: str, path: str, tokenizer=None) -> SessionResult:
         signals=list(report.signals),
         tool_tokens=dict(report.tool_tokens),
         tool_counts=dict(report.tool_counts),
+        intent_tokens=dict(report.intent_tokens),
+        intent_counts=dict(report.intent_counts),
     )
 
 
@@ -163,6 +167,19 @@ def tool_ranking(results: list[SessionResult]) -> dict[str, dict[str, int]]:
     return by_source
 
 
+def intent_ranking(results: list[SessionResult]) -> dict[str, dict[str, int]]:
+    """Tool-result tokens per intent, per source plus 'all'."""
+    by_source: dict[str, dict[str, int]] = {}
+    overall: dict[str, int] = {}
+    for r in results:
+        src = by_source.setdefault(r.source, {})
+        for intent, tokens in r.intent_tokens.items():
+            src[intent] = src.get(intent, 0) + tokens
+            overall[intent] = overall.get(intent, 0) + tokens
+    by_source["all"] = overall
+    return by_source
+
+
 def render_sweep(results: list[SessionResult], agg: dict) -> str:
     lines = []
     w = 72
@@ -208,6 +225,23 @@ def render_sweep(results: list[SessionResult], agg: dict) -> str:
                 continue
             top3 = sorted(src_tools.items(), key=lambda kv: -kv[1])[:3]
             src_total = sum(src_tools.values()) or 1
+            summary = "  ·  ".join(f"{n} {t / src_total:.0%}" for n, t in top3)
+            lines.append(f"    [{src}] {summary}")
+        lines.append("")
+
+    intents = intent_ranking(results)
+    overall_i = intents.get("all", {})
+    if overall_i:
+        grand_i = sum(overall_i.values()) or 1
+        lines.append("── top tool intents (all sessions) " + "─" * 31)
+        for intent, tok in sorted(overall_i.items(), key=lambda kv: -kv[1])[:8]:
+            lines.append(f"  {intent:<19} {tok:>11,} ({tok / grand_i:>4.0%})")
+        for src in ("claude-code", "codex", "kimi-code"):
+            src_intents = intents.get(src) or {}
+            if not src_intents:
+                continue
+            top3 = sorted(src_intents.items(), key=lambda kv: -kv[1])[:3]
+            src_total = sum(src_intents.values()) or 1
             summary = "  ·  ".join(f"{n} {t / src_total:.0%}" for n, t in top3)
             lines.append(f"    [{src}] {summary}")
         lines.append("")
@@ -261,6 +295,16 @@ def to_markdown(results: list[SessionResult], agg: dict) -> str:
             top3 = sorted(src_tools.items(), key=lambda kv: -kv[1])[:3]
             summary = " · ".join(f"**{n}** {t / src_total:.0%}" for n, t in top3)
             lines.append(f"- **{src}**: {summary}")
+        lines.append("")
+    intents = intent_ranking(results)
+    overall_i = intents.get("all", {})
+    if overall_i:
+        grand_i = sum(overall_i.values()) or 1
+        lines.append("## Tool intents (result tokens, all sessions)\n")
+        lines.append("| Intent | Tokens | Share |")
+        lines.append("|---|---|---|")
+        for intent, tok in sorted(overall_i.items(), key=lambda kv: -kv[1])[:12]:
+            lines.append(f"| {intent} | {tok:,} | {tok / grand_i:.0%} |")
         lines.append("")
     lines.append("## Top 5 largest sessions\n")
     for r in sorted(results, key=lambda r: -r.total_tokens)[:5]:
